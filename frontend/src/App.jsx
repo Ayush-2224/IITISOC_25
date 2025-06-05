@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import "react-toastify/dist/ReactToastify.css";
+import ExploreTrending from "./components/Explore";
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
            <Route path="/login" element={<Login/>} />
            <Route path="/" element={<Home/>} />
             <Route path="/signup" element={<Signup/>} />
+            <Route path="/explore" element={<ExploreTrending timeWindow="week"/>} />
         </Routes>
     </div>
   );
