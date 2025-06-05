@@ -4,7 +4,7 @@ import axios from "axios";
 const MovieCarousel = () => {
   const [movies, setMovies] = useState([]);
 
-  const API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62"; // Replace with your key
+  const API_KEY = ""; // Replace with your key
   const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
   useEffect(() => {
