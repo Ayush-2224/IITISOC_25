@@ -2,8 +2,9 @@ import userModel from "../models/userModel.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import validator from "validator"
+import passport from '../config/googleAuth.js';
 
-
+import transporter from '../config/nodeMailer.js'
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET);
 };
@@ -83,4 +84,84 @@ const registerUser = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser};
+
+const googleAuth = passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    prompt: 'select_account',
+  });
+
+const ClientURL=process.env.BASE_URL
+
+const googleCallBack=[
+  passport.authenticate('google',{
+    failureRedirect: `${ClientURL}/login`,
+    session: false
+  }),
+  async(req,res)=>{
+   try{ if(!req.user || !req.user._id){
+      throw new Error("User authentication failed");
+    }
+    const token = createToken(req.user._id);
+    res.redirect(`${ClientURL}`);}
+    catch(error){
+        console.error('Google authentication error:', error);
+        res.redirect(`${ClientURL}/signup`);
+      }
+  }
+]
+
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User with this email does not exist' });
+    }
+
+    const JWT_SECRET = process.env.JWT_SECRET_USER;
+    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '15m' });
+    const resetURL = `http://localhost:5173/reset-password/${token}`;
+
+    await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to: email,
+      subject: 'Password Reset',
+      html: `<p>Click <a href="${resetURL}">here</a> to reset your password</p>`,
+    });
+
+    res.status(200).json({ message: 'Reset email sent successfully' });
+  } catch (error) {
+    console.error('forgotPassword error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { token, password } = req.body;
+  try {
+    const { email } = jwt.verify(token, process.env.JWT_SECRET_FORGETPASSWORD);
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.password = password;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('resetPassword error:', error);
+    res.status(400).json({ message: 'Invalid or expired token' });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    res.cookie('jwt', '', { maxAge: 0 });
+    res.status(200).json({ message: 'Logout completed successfully' });
+  } catch (error) {
+    console.error('logout error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+export { loginUser, registerUser, googleAuth, googleCallBack,forgotPassword,resetPassword,logout };
