@@ -11,6 +11,7 @@ import SearchResults from "./components/SearchResults";
 import MediaDetails from "./components/MediaDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import EventRegistration from "./pages/EventRegistration";
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
             <Route path="/:mediaType/:id" element={<MediaDetails />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/events/create" element={<EventRegistration />} />
        </Routes>
     </div>
   );

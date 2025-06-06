@@ -66,11 +66,16 @@ const SearchBarWithSuggestions = () => {
   };
 
   return (
-    <div className="relative w-full md:w-full mx-auto bg-black mt-1 ml-1 ">
+    <div className="relative w-full md:w-full mx-auto bg-black text-white mt-1 ml-1 ">
       <div className="flex flex-col md:flex-row items-center gap-2">
         <input
           type="text"
           value={query}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch();
+            }
+          }}
           onChange={handleInputChange}
           placeholder="Search movies or shows..."
           className="flex-1 border px-3 py-2"
