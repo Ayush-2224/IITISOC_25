@@ -6,18 +6,24 @@ import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import "react-toastify/dist/ReactToastify.css";
 import ExploreTrending from "./components/Explore";
+import SearchBarWithFilters from "./components/SearchBar";
+import SearchResults from "./components/SearchResults";
+import MediaDetails from "./components/MediaDetails";
 
 const App = () => {
   return (
     <div >
       <ToastContainer position="bottom-right"/>
       <Navbar/>
+      <SearchBarWithFilters/>
         <Routes>
            <Route path="/login" element={<Login/>} />
-           <Route path="/" element={<Home/>} />
+            <Route path="/" element={<Home/>} />
             <Route path="/signup" element={<Signup/>} />
             <Route path="/explore" element={<ExploreTrending timeWindow="week"/>} />
-        </Routes>
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/:mediaType/:id" element={<MediaDetails />} />
+       </Routes>
     </div>
   );
 };
