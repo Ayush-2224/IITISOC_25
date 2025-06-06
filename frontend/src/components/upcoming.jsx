@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const UpcomingMoviesCarousel = () => {
   const [movies, setMovies] = useState([]);
 
-  const API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62"; //Replace this with your TMDb API key
+  const API_KEY = ""; //Replace this with your TMDb API key
   const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
   useEffect(() => {

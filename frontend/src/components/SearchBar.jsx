@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import debounce from "lodash.debounce";
 
-const API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62";
+const API_KEY = "";
 
 const SearchBarWithSuggestions = () => {
   const [query, setQuery] = useState("");
