@@ -1,10 +1,12 @@
 import passport from 'passport';
 import {Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import userModel from '../models/userModel.js';
+import bcrypt from 'bcrypt';
+
 passport.use(new GoogleStrategy({
     clientID:process.env.GOOGLE_CLIENT_ID,
-    clientSecret:process.GOOGLE_CLIENT_SECRET,
-    callbackURL:`${process.env.BASE_URL}/api/user/auth/google/callback`,
+    clientSecret:process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL:"http://localhost:4000/api/user/auth/google/callback",
     proxy:true}
 , async (accessToken, refreshToken, profile, done) => {
         try {
@@ -12,12 +14,18 @@ passport.use(new GoogleStrategy({
                 return done(new Error("No profile information received from Google"));
             }
             const user= await userModel.findOne({ googleId: profile.id });
+          
+    
+    
+
             if(!user){
                const randomPassword = Math.random().toString(36).slice(-8);
-               user=await userModel.create({
+               const salt = await bcrypt.genSalt(10);
+               const hashedPassword = await bcrypt.hash(randomPassword, salt);
+              const user=await userModel.create({
                     name: profile.displayName ||profile.emails[0].value.split('@')[0],
                     email: profile.emails[0].value,
-                    password: randomPassword,
+                    password: hashedPassword,
                     googleId: profile.id,
                     profilePic: profile.photos?.[0].value || "https://api.dicebear.com/9.x/micah/svg?seed=Christopher"
                 });

@@ -9,6 +9,8 @@ import ExploreTrending from "./components/Explore";
 import SearchBarWithFilters from "./components/SearchBar";
 import SearchResults from "./components/SearchResults";
 import MediaDetails from "./components/MediaDetails";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const App = () => {
   return (
@@ -23,6 +25,8 @@ const App = () => {
             <Route path="/explore" element={<ExploreTrending timeWindow="week"/>} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/:mediaType/:id" element={<MediaDetails />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
        </Routes>
     </div>
   );

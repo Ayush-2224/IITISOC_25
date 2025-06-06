@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
-const API_KEY = ""; // Replace with your key
+const API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62"; // Replace with your key
 
 const MediaDetails = () => {
   const { id } = useParams();

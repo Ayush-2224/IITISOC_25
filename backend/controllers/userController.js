@@ -41,8 +41,9 @@ const loginUser = async (req, res) => {
 
 // Route for user registration
 const registerUser = async (req, res) => {
+  
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, profilePic } = req.body;
 
     // checking user if already present or not
     const exists = await userModel.findOne({ email });
@@ -71,6 +72,7 @@ const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      profilePic: profilePic ||"https://api.dicebear.com/9.x/micah/svg?seed=Christopher"
     });
 
     const user = await newUser.save();
@@ -111,6 +113,7 @@ const googleCallBack=[
 ]
 
 const forgotPassword = async (req, res) => {
+  console.log('forgotPassword called');
   const { email } = req.body;
   try {
     const user = await userModel.findOne({ email });
@@ -118,7 +121,7 @@ const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: 'User with this email does not exist' });
     }
 
-    const JWT_SECRET = process.env.JWT_SECRET_USER;
+    const JWT_SECRET = process.env.JWT_SECRET_FORGETPASSWORD;
     const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '15m' });
     const resetURL = `http://localhost:5173/reset-password/${token}`;
 
@@ -137,6 +140,7 @@ const forgotPassword = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
+  console.log('resetPassword called');
   const { token, password } = req.body;
   try {
     const { email } = jwt.verify(token, process.env.JWT_SECRET_FORGETPASSWORD);
@@ -144,8 +148,18 @@ const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    if (password.length < 8) {
+      return res.json({
+        success: false,
+        message: "please enter strong password",
+      });
+    }
 
-    user.password = password;
+    // hashing user password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
     await user.save();
 
     res.status(200).json({ message: 'Password reset successfully' });

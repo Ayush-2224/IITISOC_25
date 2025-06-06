@@ -9,6 +9,9 @@ const Login = () => {
   const [password, setPassword] = useState("");
    const {backendUrl,token,settoken}=useContext(Context)
    const navigate=useNavigate()
+   const handleGoogleLogin = () => {
+    window.location.href = `http://localhost:4000/api/user/auth/google`;
+  };
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -88,7 +91,19 @@ const Login = () => {
           >
             Signup
           </Link>
+
         </p>
+         <button
+              onClick={handleGoogleLogin}
+              className="w-full h-12 flex items-center justify-center gap-3 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors shadow-sm"
+            >
+              <img 
+                src="https://img.icons8.com/?size=100&id=V5cGWnc9R4xj&format=png&color=000000" 
+                alt="Google logo" 
+                className="w-5 h-5"
+              />
+              <span className="text-gray-700 font-medium">Continue with Google</span>
+            </button>
       </form>
     </div>
   );
