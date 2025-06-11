@@ -41,7 +41,18 @@ app.get("/",(req,res)=>{
     res.send("api working")
 })
 
-
+// Error handling middleware
+app.use((error, req, res, next) => {
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+        console.log(error);
+        return res.status(400).json({ error: 'Unexpected file upload.' });
+    }
+    if(res.headerSent) {
+        return next(error);
+    }
+    res.status(error.code || 500)
+    res.json({message: error.message || "An unknown error occurred"})
+});
 
 app.listen(PORT,()=>{
     console.log("server started on PORT" + PORT);
