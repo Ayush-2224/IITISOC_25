@@ -1,1 +1,5 @@
 watchlist individually for better movie recomendation
+vote editing
+fix routes
+send user info from backend to frontend
+check working

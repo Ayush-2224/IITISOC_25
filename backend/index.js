@@ -5,7 +5,10 @@ import connectDB from "./config/mongodb.js";
 import userRouter from "./routes/userRoute.js";
 import passport from './config/googleAuth.js';
 import session from "express-session";
-
+import eventsRoute from "./routes/events.route.js";
+import {router as messageRouter }from "./routes/message.route.js";
+import {router as pollRouter} from './routes/poll.route.js';
+import {server,io,app} from "./config/socket.js";
 
 
 // port from .env
@@ -42,6 +45,8 @@ app.get("/",(req,res)=>{
     res.send("api working")
 })
 app.use("/api/events",eventsRoute);
+app.use("/api/message", messageRouter);
+app.use("/api/poll", pollRouter);
 // Error handling middleware
 app.use((error, req, res, next) => {
     if (error.code === 'LIMIT_UNEXPECTED_FILE') {
@@ -58,4 +63,3 @@ app.use((error, req, res, next) => {
 server.listen(PORT,()=>{
     console.log("server started on PORT" + PORT);
 })
-
