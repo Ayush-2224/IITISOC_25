@@ -5,10 +5,9 @@ import connectDB from "./config/mongodb.js";
 import userRouter from "./routes/userRoute.js";
 import passport from './config/googleAuth.js';
 import session from "express-session";
+import {server,io,app} from "./config/socket.js";
 
 
-// express app
-const app =express()
 
 // port from .env
 const PORT = 4000;
@@ -18,7 +17,10 @@ connectDB()
 
 // middlewares
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -43,7 +45,7 @@ app.get("/",(req,res)=>{
 
 
 
-app.listen(PORT,()=>{
+server.listen(PORT,()=>{
     console.log("server started on PORT" + PORT);
 })
 
