@@ -5,7 +5,6 @@ import connectDB from "./config/mongodb.js";
 import userRouter from "./routes/userRoute.js";
 import passport from './config/googleAuth.js';
 import session from "express-session";
-import {server,io,app} from "./config/socket.js";
 
 
 
@@ -42,8 +41,19 @@ app.use("/api/user",userRouter);
 app.get("/",(req,res)=>{
     res.send("api working")
 })
-
-
+app.use("/api/events",eventsRoute);
+// Error handling middleware
+app.use((error, req, res, next) => {
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+        console.log(error);
+        return res.status(400).json({ error: 'Unexpected file upload.' });
+    }
+    if(res.headerSent) {
+        return next(error);
+    }
+    res.status(error.code || 500)
+    res.json({message: error.message || "An unknown error occurred"})
+});
 
 server.listen(PORT,()=>{
     console.log("server started on PORT" + PORT);
