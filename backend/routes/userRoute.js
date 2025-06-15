@@ -1,5 +1,5 @@
 import express from "express"
-import {loginUser, registerUser,googleAuth,googleCallBack,forgotPassword,resetPassword,logout} from "../controllers/userController.js"
+import {loginUser, registerUser,googleAuth,googleCallBack,forgotPassword,resetPassword,logout} from "../controllers/user.controller.js"
 
 
 const userRouter = express.Router()
