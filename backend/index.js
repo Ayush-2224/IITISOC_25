@@ -9,6 +9,7 @@ import eventsRoute from "./routes/events.route.js";
 import {router as messageRouter }from "./routes/message.route.js";
 import {router as pollRouter} from './routes/poll.route.js';
 import {server,io,app} from "./config/socket.js";
+import Grouprouter from "./routes/group.route.js";
 
 
 // port from .env
@@ -47,6 +48,7 @@ app.get("/",(req,res)=>{
 app.use("/api/events",eventsRoute);
 app.use("/api/message", messageRouter);
 app.use("/api/poll", pollRouter);
+app.use("/api/group",Grouprouter)
 // Error handling middleware
 app.use((error, req, res, next) => {
     if (error.code === 'LIMIT_UNEXPECTED_FILE') {
