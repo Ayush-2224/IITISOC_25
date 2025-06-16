@@ -1,7 +1,7 @@
 import React from "react";
 
 const MessageBubble = ({ message, currentUser }) => {
-  const isOwn = message.senderId?._id === currentUser._id;
+  const isOwn = (message.senderId?._id === currentUser._id)|| (message.isMine);
 
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>

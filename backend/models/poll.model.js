@@ -5,7 +5,6 @@ const pollSchema=mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Event",
         required: true,
-        unique:true,
     },
     userId:{
         type:mongoose.Schema.Types.ObjectId,

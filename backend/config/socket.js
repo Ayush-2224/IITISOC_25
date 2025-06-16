@@ -4,12 +4,13 @@ import express from 'express';
 
 const app=express();
 const server=http.createServer(app)
-const io=new Server(server,{
-    cors:{
-        origin:["http://localhost:5173"]
-        
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173",
+        credentials: true   
     },
-})
+});
+
 
 
 
@@ -32,10 +33,16 @@ io.on('connection', (socket) => {
 
   
   });
-    socket.on('send-poll', ({ eventId, pollData }) => {
-        socket.to(eventId).emit('poll-created', pollData);
-       
-    });
+    socket.on('send-poll', (data) => {
+  if (!data || !data.eventId || !data.pollData) {
+    console.error("Invalid 'send-poll' payload:", data);
+    return;
+  }
+
+  const { eventId, pollData } = data;
+  socket.to(eventId).emit('poll-created', pollData);
+});
+
     socket.on('poll-update', ({ eventId, pollData }) => {
         socket.to(eventId).emit('poll-updated', pollData);
     });

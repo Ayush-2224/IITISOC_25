@@ -1,5 +1,5 @@
-import Event from "../models/event.model";
-import HttpError from "../models/httperror";
+import Event from "../models/event.model.js";
+import HttpError from "../models/httperror.js";
 
 const createEvent = async (req, res, next) =>{
     const {title, dateTime, notes, invitedEmails, reminderTime} = req.body;
@@ -143,3 +143,12 @@ const deleteEventInvitee = async (req, res, next) =>{
         return next(new HttpError(error.message, 400));
     }
 }
+
+export {
+    createEvent,
+    getEvents,
+    updateEvent,
+    addEventInvitees,
+    deleteEvent,
+    deleteEventInvitee
+};

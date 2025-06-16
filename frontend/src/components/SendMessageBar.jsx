@@ -19,32 +19,43 @@ const [text, setText] = useState("");
   };
 
   const handleSendMessage = async () => {
-    if (!text.trim() && !imageFile) return; 
-    setIsSending(true);
+  if (!text.trim() && !imageFile) return; 
+  setIsSending(true);
 
-    try {
-      let formData = new FormData();
-      formData.append("text", text);
-      if (imageFile) formData.append("profilePic", imageFile);
-      formData.append("eventId", eventId);
-      formData.append("userId", user._id);
+  try {
+    let formData = new FormData();
+    formData.append("text", text);
+    if (imageFile) formData.append("profilePic", imageFile);
+    formData.append("userId", user._id);
 
-      const res = await axios.post("http://localhost:4000/api/messages/send-message", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+    const res = await axios.post(`http://localhost:4000/api/message/send/${eventId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-      socket.emit("send-message", res.data.message);
-
-      resetInput();
-    } catch (error) {
-      console.error("Send message failed:", error);
-      alert("Failed to send message");
+    socket.emit("send-message", {
+  eventId,
+  message: {
+    text,
+    sender: {
+      _id: user._id,
+      name: user.name,
+      profilePic: user.profilePic,
     }
+  }
+});
 
-    setIsSending(false);
-  };
+
+    resetInput();
+  } catch (error) {
+    console.error("Send message failed:", error);
+    alert("Failed to send message");
+  }
+
+  setIsSending(false);
+};
+
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];

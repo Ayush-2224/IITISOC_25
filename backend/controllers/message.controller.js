@@ -1,12 +1,12 @@
-import Message from "../models/message.model";
-import { uploadToCloudinary } from "../config/cloudinary";
-import Poll from "../models/poll.model";
+import Message from "../models/message.model.js";
+import { uploadToCloudinary } from "../config/cloudinary.js";
+import Poll from "../models/poll.model.js";
 import { io } from "../config/socket.js";
 const sendMessage= async(req,res)=>{
+    //console.log("Message request received");
         try {
-            const {text}=req.body
+            const {text,userId}=req.body
             const {eventId}=req.params
-            const {userId}=req.user
             let imageUrl
             if(req.file){
             const result = await uploadToCloudinary(req.file.buffer);
@@ -32,6 +32,7 @@ const sendMessage= async(req,res)=>{
         })
 
         } catch (error) {
+            console.error("Error sending message:", error);
             res.status(500).json({
                 success:false,
                 message:error.message
@@ -41,17 +42,17 @@ const sendMessage= async(req,res)=>{
 
 const combinedFeed = async (req, res) => {
     try {
-        const { eventID } = req.params;
-
+        const { eventId } = req.params;
+        //console.log("Event ID:", eventId);
         // Get all messages for the event
-        const messages = await Message.find({ eventId: eventID })
+        const messages = await Message.find({ eventId: eventId })
             .populate('senderId', 'name profilePic')
             .sort({ createdAt: -1 });
-
+       // console.log(messages);
         // Get all polls for the event
-        const polls = await Poll.find({ eventId: eventID })
+        const polls = await Poll.find({ eventId: eventId })
             .populate('userId', 'name');
-
+       // console.log(polls);
         // Combine messages and polls into one array
         const combinedData = [
             ...messages.map(msg => ({ ...msg._doc, type: 'message' })),

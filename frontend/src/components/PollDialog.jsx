@@ -1,5 +1,6 @@
 import axios from "axios";  
 import React from 'react'
+import {socket} from "../socket";
 import { useState } from "react";
 function PollDialog({ eventId, userId, onClose }) {
     const [question, setQuestion] = useState("");
@@ -13,23 +14,28 @@ function PollDialog({ eventId, userId, onClose }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!question.trim() || options.some((opt) => !opt.trim()) || options.length < 2) {
-      alert("Please enter question and at least 2 options.");
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const pollData = { question, options };
-      await axios.post(`/api/poll/create/${eventId}`, pollData);
-      onClose();
-    } catch (err) {
-      console.error("Create poll error", err);
-      alert("Failed to create poll");
-    }
-    setIsSubmitting(false);
-  };
-  
+  e.preventDefault();
+  if (!question.trim() || options.some((opt) => !opt.trim()) || options.length < 2) {
+    alert("Please enter question and at least 2 options.");
+    return;
+  }
+
+  setIsSubmitting(true);
+  try {
+    const pollData = { question, options, eventId, userId };
+    const res = await axios.post(`http://localhost:4000/api/poll/create`, pollData);
+
+    // ✅ Emit to socket
+    socket.emit("send-poll", res.data.poll);
+
+    onClose(); // Close modal
+  } catch (err) {
+    console.error("Create poll error", err);
+    alert("Failed to create poll");
+  }
+  setIsSubmitting(false);
+};
+
    
  return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">

@@ -25,6 +25,7 @@ const Login = () => {
         if (response.data.success) {
           settoken(response.data.token);
           localStorage.setItem("token", response.data.token);
+          localStorage.setItem("userId", response.data.userId);
           toast.success("You have logged in succesfully")
         } else {
           // console.log(response.data.message);

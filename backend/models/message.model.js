@@ -9,7 +9,6 @@ const messageSchema = new mongoose.Schema({
         ref:'Event',
         type: mongoose.Schema.Types.ObjectId,
         required:true,
-        unique:true,
     },
     text:{
         type:String,

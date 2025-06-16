@@ -6,8 +6,8 @@ import userRouter from "./routes/userRoute.js";
 import passport from './config/googleAuth.js';
 import session from "express-session";
 import eventsRoute from "./routes/events.route.js";
-import {router as messageRouter }from "./routes/message.route.js";
-import {router as pollRouter} from './routes/poll.route.js';
+import messageRouter from "./routes/message.route.js";
+import pollRouter from "./routes/poll.route.js";
 import {server,io,app} from "./config/socket.js";
 import Grouprouter from "./routes/group.route.js";
 

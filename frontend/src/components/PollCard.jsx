@@ -11,7 +11,7 @@ function PollCard({ poll, userId, eventId }) {
     if (!option || isVoting) return;
     setIsVoting(true);
     try {
-      await axios.put(`/api/poll/vote/${poll._id}`, { userId, option });
+      await axios.post(`http://localhost:4000/api/poll/vote/${poll._id}`, { userId, option });
       setSelectedOption(option);
     } catch (err) {
       console.error('Vote failed', err);

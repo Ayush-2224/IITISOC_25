@@ -12,7 +12,7 @@ import MediaDetails from "./components/MediaDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import EventRegistration from "./pages/EventRegistration";
-
+import DiscussionPage from "./pages/DiscussionPage";
 const App = () => {
   return (
     <div >
@@ -29,6 +29,7 @@ const App = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/events/create" element={<EventRegistration />} />
+            <Route path="/discussion/:eventId" element={<DiscussionPage />} />
        </Routes>
     </div>
   );

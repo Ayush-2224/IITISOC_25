@@ -13,8 +13,9 @@ function DiscussionPage() {
     const { eventId } = useParams();
     const [showScrollBtn, setShowScrollBtn] = useState(false);
     const user = {
-  _id: localStorage.getItem("userID"),
+  _id: localStorage.getItem("userId"),
 };
+ //console.log("User ID:", user._id);
     const scrollToBottom = () => {
   const el = feedRef.current;
   if (el) {
@@ -23,15 +24,17 @@ function DiscussionPage() {
 };
 
     useEffect(() => {
-        socket.emit("join-event", { eventId, userId: localStorage.getItem("userID") });
+        socket.emit("join-event", { eventId, userId: user._id });
 
-        axios.get(`http://localhost:4000/api/events/combined/${eventId}`).then((res) => {
+        axios.get(`http://localhost:4000/api/message/combined/${eventId}`).then((res) => {
             setFeed(res.data.feed);
         });
 
         socket.on("receive-message", (msg) => {
-            setFeed((prev) => [{ ...msg, type: "message" }, ...prev]);
-        });
+    const isMine = msg.senderId === user._id;
+    setFeed((prev) => [{ ...msg, type: "message", isMine }, ...prev]);
+});
+
 
         socket.on("send-poll", (poll) => {
             setFeed((prev) => [{ ...poll, type: "poll" }, ...prev]);
@@ -76,7 +79,7 @@ function DiscussionPage() {
           .reverse()
           .map((item) =>
             item.type === "message" ? (
-              <MessageBubble key={item._id} message={item} currentUser={user} />
+              <MessageBubble key={item._id} message={item} currentUser={user}  />
             ) : (
               <PollCard key={item._id} poll={item} userId={user._id} />
             )
