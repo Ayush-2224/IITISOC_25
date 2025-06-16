@@ -17,6 +17,7 @@ import CreateGroupForm from "./pages/createGroup";
 import JoinGroupForm from "./pages/JoinGroupForm";
 import GroupDetails from "./pages/GroupDetails";
 import Groups from "./pages/Groups";
+import Auth from "./components/Auth"; // Google Auth component
 
 const App = () => {
   return (
@@ -34,11 +35,13 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/events/create" element={<EventRegistration />} />
-        <Route path="/discussion/:eventId" element={<DiscussionPage />} />
+        <Route path="/discussion/:groupId" element={<DiscussionPage />} />
         <Route path="/create-group" element={<CreateGroupForm />}></Route>
         <Route path="/join-group" element={<JoinGroupForm />} />
         <Route path="/group/:groupId" element={<GroupDetails />} />
         <Route path="/groups" element={<Groups />}></Route>
+        
+            <Route path="/auth" element={<Auth />} />
       </Routes>
     </div>
   );

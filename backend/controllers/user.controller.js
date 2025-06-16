@@ -104,11 +104,12 @@ const googleCallBack=[
       throw new Error("User authentication failed");
     }
     const token = createToken(req.user._id);
-    res.redirect(`${ClientURL}`);}
-    catch(error){
-        console.error('Google authentication error:', error);
-        res.redirect(`${ClientURL}/signup`);
-      }
+    res.redirect(`http://localhost:5173/auth?token=${token}&userId=${req.user._id}`);
+
+  } catch(error){
+      console.error('Google authentication error:', error);
+      res.redirect(`${ClientURL}/signup`);
+    }
   }
 ]
 

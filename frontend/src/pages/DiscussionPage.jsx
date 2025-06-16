@@ -10,7 +10,7 @@ import SendMessageBar from '../components/SendMessageBar.jsx';
 function DiscussionPage() {
     const [feed, setFeed] = useState([]);
     const feedRef = useRef(null);
-    const { eventId } = useParams();
+    const { groupId } = useParams();
     const [showScrollBtn, setShowScrollBtn] = useState(false);
     const user = {
   _id: localStorage.getItem("userId"),
@@ -24,9 +24,9 @@ function DiscussionPage() {
 };
 
     useEffect(() => {
-        socket.emit("join-event", { eventId, userId: user._id });
-
-        axios.get(`http://localhost:4000/api/message/combined/${eventId}`).then((res) => {
+        socket.emit("join-event", { groupId, userId: user._id });
+        //console.log("Joined group:", groupId);
+        axios.get(`http://localhost:4000/api/message/combined/${groupId}`).then((res) => {
             setFeed(res.data.feed);
         });
 
@@ -55,7 +55,7 @@ function DiscussionPage() {
       socket.off("poll-update");
     };
 
-    }, [eventId]);
+    }, [groupId]);
 
     useEffect(() => {
     const handleScroll = () => {
@@ -86,7 +86,7 @@ function DiscussionPage() {
           )}
       </div>
 
-      <SendMessageBar eventId={eventId} user={user} />
+      <SendMessageBar groupId={groupId} user={user} />
 
       {showScrollBtn && (
         <button

@@ -5,8 +5,8 @@ const messageSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true
     },
-    eventId:{
-        ref:'Event',
+    groupId:{
+        ref:'Group',
         type: mongoose.Schema.Types.ObjectId,
         required:true,
     },

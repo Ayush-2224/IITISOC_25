@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 
 const pollSchema=mongoose.Schema({
-    eventId: {
+    groupId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Event",
+        ref: "Group",
         required: true,
     },
     userId:{
@@ -27,6 +27,11 @@ const pollSchema=mongoose.Schema({
   votes: {
     type: Map,
     of: String, // userId -> movie name
+    default: {},
+  },
+  percentages: {
+    type: Map,
+    of: Number, // option -> percentage
     default: {},
   },
 

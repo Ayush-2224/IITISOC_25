@@ -2,10 +2,10 @@ import Poll from "../models/poll.model.js";
 import {io} from "../config/socket.js"
 const createPoll = async (req, res) => {
     try {
-        const { eventId, question, options, userId } = req.body;
+        const { groupId, question, options, userId } = req.body;
         // const userId = req.user._id;
         const newPoll = new Poll({
-            eventId,
+            groupId,
             userId,
             question,
             options
@@ -13,7 +13,7 @@ const createPoll = async (req, res) => {
 
         await newPoll.save();
 
-        io.to(eventId).emit('send-poll', newPoll);
+        io.to(groupId).emit('send-poll', newPoll);
 
         res.status(201).json({
             success: true,
@@ -48,35 +48,40 @@ const increaseVote = async (req, res) => {
             });
         }
 
-        const previousOption = poll.votes.get(userId);
+        const userKey = userId.toString();
+        const previousOption = poll.votes.get(userKey);
 
         if (previousOption) {
             if (previousOption !== option) {
                 poll.count.set(previousOption, (poll.count.get(previousOption) || 1) - 1);
                 poll.count.set(option, (poll.count.get(option) || 0) + 1);
-                poll.votes.set(userId, option);
-            } // else: same option voted again, no change
+                poll.votes.set(userKey, option);
+            }
         } else {
             poll.count.set(option, (poll.count.get(option) || 0) + 1);
-            poll.votes.set(userId, option);
+            poll.votes.set(userKey, option);
         }
 
-        await poll.save();
-
         const totalVotes = Array.from(poll.count.values()).reduce((a, b) => a + b, 0);
-
         const percentages = {};
+
         poll.options.forEach(opt => {
             const count = poll.count.get(opt) || 0;
-            percentages[opt] = totalVotes ? ((count / totalVotes) * 100).toFixed(1) : "0.0";
+            percentages[opt] = totalVotes ? parseFloat(((count / totalVotes) * 100).toFixed(1)) : 0.0;
+            poll.percentages.set(opt, percentages[opt]);
         });
 
-        io.to(poll.eventId.toString()).emit("poll-update", {
+        poll.markModified("count");
+        poll.markModified("votes");
+        poll.markModified("percentages");
+        await poll.save();
+
+        io.to(poll.groupId.toString()).emit("poll-update", {
             pollId: poll._id,
             percentages
         });
 
-        io.to(poll.eventId.toString()).emit("vote-poll", {
+        io.to(poll.groupId.toString()).emit("vote-poll", {
             pollId: poll._id,
             userId,
             option
@@ -89,7 +94,6 @@ const increaseVote = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
         res.status(500).json({
             success: false,
             message: error.message
@@ -97,4 +101,4 @@ const increaseVote = async (req, res) => {
     }
 };
 
-export { createPoll, increaseVote};
+export { createPoll, increaseVote };

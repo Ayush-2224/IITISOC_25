@@ -2,7 +2,7 @@ import axios from "axios";
 import React from 'react'
 import {socket} from "../socket";
 import { useState } from "react";
-function PollDialog({ eventId, userId, onClose }) {
+function PollDialog({ groupId, userId, onClose }) {
     const [question, setQuestion] = useState("");
     const [options, setOptions] = useState(["", ""]);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +22,7 @@ function PollDialog({ eventId, userId, onClose }) {
 
   setIsSubmitting(true);
   try {
-    const pollData = { question, options, eventId, userId };
+    const pollData = { question, options, groupId, userId };
     const res = await axios.post(`http://localhost:4000/api/poll/create`, pollData);
 
     // ✅ Emit to socket

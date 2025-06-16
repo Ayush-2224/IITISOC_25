@@ -4,7 +4,7 @@ import { sendMessage, combinedFeed } from "../controllers/message.controller.js"
 
 const router = Router();
 
-router.post("/send/:eventId", fileUpload.single("profilePic"), sendMessage);
-router.get("/combined/:eventId", combinedFeed);
+router.post("/send/:groupId", fileUpload.single("profilePic"), sendMessage);
+router.get("/combined/:groupId", combinedFeed);
 
 export default router;

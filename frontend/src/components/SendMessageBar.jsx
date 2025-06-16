@@ -3,7 +3,7 @@ import React, { useRef } from 'react'
 import axios from "axios";
 import { useState } from "react";
 import {socket} from "../socket";
-function SendMessageBar({ eventId, user }) {
+function SendMessageBar({ groupId, user }) {
 const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -28,14 +28,14 @@ const [text, setText] = useState("");
     if (imageFile) formData.append("profilePic", imageFile);
     formData.append("userId", user._id);
 
-    const res = await axios.post(`http://localhost:4000/api/message/send/${eventId}`, formData, {
+    const res = await axios.post(`http://localhost:4000/api/message/send/${groupId}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
 
     socket.emit("send-message", {
-  eventId,
+  groupId,
   message: {
     text,
     sender: {
@@ -144,7 +144,7 @@ const [text, setText] = useState("");
 
       {showPollDialog && (
         <PollDialog
-          eventId={eventId}
+          groupId={groupId}
           userId={user._id}
           onClose={() => setShowPollDialog(false)}
         />

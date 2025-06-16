@@ -1,13 +1,19 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react';
 import { socket } from '../socket';
 import axios from 'axios';
-import { useEffect,useState } from 'react';
-function PollCard({ poll, userId, eventId }) {
-      const [selectedOption, setSelectedOption] = useState(poll.votes?.[userId] || '');
-  const [percentages, setPercentages] = useState(poll.percentages || {});
+
+function PollCard({ poll, userId, groupId }) {
+  const [selectedOption, setSelectedOption] = useState(poll.votes?.[userId] || '');
+  const [percentages, setPercentages] = useState(() => {
+    const initial = {};
+    poll.options.forEach(opt => {
+      initial[opt] = parseFloat(poll.percentages?.[opt]) || 0.0;
+    });
+    return initial;
+  });
   const [isVoting, setIsVoting] = useState(false);
 
-   const handleVote = async (option) => {
+  const handleVote = async (option) => {
     if (!option || isVoting) return;
     setIsVoting(true);
     try {
@@ -19,25 +25,29 @@ function PollCard({ poll, userId, eventId }) {
     setIsVoting(false);
   };
 
-  useEffect(()=>{
-    const updateHandler=({ pollId, percentages:updated }) => {
+  useEffect(() => {
+    const updateHandler = ({ pollId, percentages: updated }) => {
       if (poll._id === pollId) {
-        setPercentages(updated);
+        const cleanPercentages = {};
+        poll.options.forEach(opt => {
+          cleanPercentages[opt] = parseFloat(updated?.[opt]) || 0.0;
+        });
+        setPercentages(cleanPercentages);
       }
-    }
+    };
+
     socket.on("poll-update", updateHandler);
     return () => {
       socket.off("poll-update", updateHandler);
-    }
-  },[socket, poll._id]);
-
+    };
+  }, [poll._id]);
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md mb-4 w-full max-w-lg">
       <h3 className="text-lg font-semibold mb-3">{poll.question}</h3>
       <div className="space-y-2">
         {poll.options.map((opt) => {
-          const percent = parseFloat(percentages[opt]) || 0;
+          const percent = parseFloat(percentages[opt]) || 0.0;
           const isSelected = selectedOption === opt;
           return (
             <div key={opt}>
@@ -68,7 +78,6 @@ function PollCard({ poll, userId, eventId }) {
       )}
     </div>
   );
-};
-
+}
 
 export default PollCard;

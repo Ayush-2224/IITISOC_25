@@ -16,16 +16,16 @@ const io = new Server(server, {
 
 io.on('connection', (socket) => {
 
-   socket.on('join-event', ({ eventId, userId }) => {
-    // Join the socket to a room with eventId
-    socket.join(eventId);
-    console.log(`User ${userId} joined event room ${eventId}`);
+   socket.on('join-event', ({ groupId, userId }) => {
+    // Join the socket to a room with groupId
+    socket.join(groupId);
+    console.log(`User ${userId} joined event room ${groupId}`);
     
   });
 
-  socket.on('send-message', ({ eventId, message }) => {
-    socket.to(eventId).emit('receive-message', message);
-    console.log(`Message sent to event ${eventId}:`, message);
+  socket.on('send-message', ({ groupId, message }) => {
+    socket.to(groupId).emit('receive-message', message);
+    console.log(`Message sent to event ${groupId}:`, message);
   });
 
   socket.on('disconnect', () => {
@@ -34,22 +34,22 @@ io.on('connection', (socket) => {
   
   });
     socket.on('send-poll', (data) => {
-  if (!data || !data.eventId || !data.pollData) {
+  if (!data || !data.groupId || !data.pollData) {
     console.error("Invalid 'send-poll' payload:", data);
     return;
   }
 
-  const { eventId, pollData } = data;
-  socket.to(eventId).emit('poll-created', pollData);
+  const { groupId, pollData } = data;
+  socket.to(groupId).emit('poll-created', pollData);
 });
 
-    socket.on('poll-update', ({ eventId, pollData }) => {
-        socket.to(eventId).emit('poll-updated', pollData);
+    socket.on('poll-update', ({ groupId, pollData }) => {
+        socket.to(groupId).emit('poll-updated', pollData);
     });
 
-    // socket.on('vote-poll', ({ eventId, pollId, userId, option }) => {
-    //     socket.to(eventId).emit('poll-vote', { pollId, userId, option });
-    //     console.log(`User ${userId} voted for option ${option} in poll ${pollId} for event ${eventId}`);
+    // socket.on('vote-poll', ({ groupId, pollId, userId, option }) => {
+    //     socket.to(groupId).emit('poll-vote', { pollId, userId, option });
+    //     console.log(`User ${userId} voted for option ${option} in poll ${pollId} for event ${groupId}`);
     // });
 
 

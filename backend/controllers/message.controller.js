@@ -6,7 +6,7 @@ const sendMessage= async(req,res)=>{
     //console.log("Message request received");
         try {
             const {text,userId}=req.body
-            const {eventId}=req.params
+            const {groupId}=req.params
             let imageUrl
             if(req.file){
             const result = await uploadToCloudinary(req.file.buffer);
@@ -16,14 +16,14 @@ const sendMessage= async(req,res)=>{
 
         const newMessage=  new Message(
             {senderId:userId,
-            eventId,
+            groupId,
             text,
             image:imageUrl ? imageUrl : undefined}
         )
 
         await newMessage.save();
 
-        io.to(eventId).emit('receive-message', newMessage);
+        io.to(groupId).emit('receive-message', newMessage);
 
         res.status(201).json({
             success:true,
@@ -42,15 +42,15 @@ const sendMessage= async(req,res)=>{
 
 const combinedFeed = async (req, res) => {
     try {
-        const { eventId } = req.params;
-        //console.log("Event ID:", eventId);
+        const { groupId } = req.params;
+        //console.log("Event ID:", groupId);
         // Get all messages for the event
-        const messages = await Message.find({ eventId: eventId })
+        const messages = await Message.find({ groupId: groupId })
             .populate('senderId', 'name profilePic')
             .sort({ createdAt: -1 });
        // console.log(messages);
         // Get all polls for the event
-        const polls = await Poll.find({ eventId: eventId })
+        const polls = await Poll.find({ groupId: groupId })
             .populate('userId', 'name');
        // console.log(polls);
         // Combine messages and polls into one array
