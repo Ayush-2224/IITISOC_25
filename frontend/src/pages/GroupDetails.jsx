@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 
 const GroupDetails = () => {
@@ -63,6 +63,13 @@ const GroupDetails = () => {
           <p className="text-gray-400">No members yet.</p>
         )}
       </ul>
+      <Link
+  to={`/discussion/${groupId}`}
+  className="inline-block mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition duration-200"
+>
+  💬 Chat with your friends
+</Link>
+
     </div>
   );
 };

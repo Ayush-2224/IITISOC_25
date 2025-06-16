@@ -68,7 +68,7 @@ const [text, setText] = useState("");
 
  return (
     <>
-      <div className="p-4 border-t bg-white flex items-center space-x-2">
+      <div className="p-4 border-t bg-black flex items-center space-x-2">
         <input
           type="text"
           placeholder="Type a message..."

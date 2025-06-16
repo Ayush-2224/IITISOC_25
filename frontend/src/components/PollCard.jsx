@@ -43,7 +43,7 @@ function PollCard({ poll, userId, groupId }) {
   }, [poll._id]);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md mb-4 w-full max-w-lg">
+    <div className=" bg-black p-4 rounded-lg shadow-md mb-4 w-full max-w-lg">
       <h3 className="text-lg font-semibold mb-3">{poll.question}</h3>
       <div className="space-y-2">
         {poll.options.map((opt) => {
@@ -55,7 +55,7 @@ function PollCard({ poll, userId, groupId }) {
                 onClick={() => handleVote(opt)}
                 disabled={isVoting}
                 className={`w-full text-left p-2 border rounded-md ${
-                  isSelected ? 'bg-blue-100 border-blue-400' : 'hover:bg-gray-100'
+                  isSelected ? 'bg-blue-100 border-blue-400' : 'hover:bg-green-100'
                 }`}
               >
                 <div className="flex justify-between items-center">

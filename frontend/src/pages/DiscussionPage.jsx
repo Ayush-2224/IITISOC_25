@@ -20,7 +20,7 @@ function DiscussionPage() {
   const el = feedRef.current;
   if (el) {
     el.scrollTop = el.scrollHeight;
-  }
+  } 
 };
 
     useEffect(() => {
@@ -81,7 +81,9 @@ function DiscussionPage() {
             item.type === "message" ? (
               <MessageBubble key={item._id} message={item} currentUser={user}  />
             ) : (
-              <PollCard key={item._id} poll={item} userId={user._id} />
+              <div key={item._id} className="flex justify-end">
+            <PollCard poll={item} userId={user._id} />
+            </div>
             )
           )}
       </div>

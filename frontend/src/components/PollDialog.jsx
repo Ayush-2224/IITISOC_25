@@ -38,8 +38,8 @@ function PollDialog({ groupId, userId, onClose }) {
 
    
  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded shadow-lg w-96 max-w-full">
+    <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-black p-6 rounded shadow-lg w-96 max-w-full">
         <h2 className="text-xl font-semibold mb-4">Create Poll</h2>
         <input
           type="text"
