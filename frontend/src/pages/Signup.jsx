@@ -39,27 +39,16 @@ const Signup = () => {
     e.preventDefault();
     try {
       const response = await axios.post(backendUrl + "/api/user/register", { name, email, password, profilePic: avatar || Avatar[avatarIndex] });
-      //  console.log(response.data)
       if (response.data.success) {
-        settoken(response.data.token);
-        localStorage.setItem("token", response.data.token);
         toast.success("User Registered Successfully")
       } else {
-        // console.log(response.data.message);
         toast.error(response.data.message);
       }
     } catch (error) {
-      //console.log(error.response.data);
       toast.error(error.message);
     }
   };
 
-  // if there is token in the local storage navigate to home page
-  useEffect(() => {
-    if (token) {
-      navigate("/");
-    }
-  }, [token]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 flex items-center justify-center p-4 relative overflow-hidden">

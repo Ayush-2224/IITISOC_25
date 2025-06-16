@@ -14,6 +14,7 @@ const Navbar = () => {
     navigate("/");
     localStorage.removeItem("token");
     settoken("");
+    localStorage.removeItem("userId");
     toast.success("You have logged out successfully");
     setDropdownOpen(!dropdownOpen);
   };
