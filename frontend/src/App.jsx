@@ -13,24 +13,33 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import EventRegistration from "./pages/EventRegistration";
 import DiscussionPage from "./pages/DiscussionPage";
+import CreateGroupForm from "./pages/createGroup";
+import JoinGroupForm from "./pages/JoinGroupForm";
+import GroupDetails from "./pages/GroupDetails";
+import Groups from "./pages/Groups";
+
 const App = () => {
   return (
-    <div >
-      <ToastContainer position="bottom-right"/>
-      <Navbar/>
-      <SearchBarWithFilters/>
-        <Routes>
-           <Route path="/login" element={<Login/>} />
-            <Route path="/" element={<Home/>} />
-            <Route path="/signup" element={<Signup/>} />
-            <Route path="/explore" element={<ExploreTrending timeWindow="week"/>} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/:mediaType/:id" element={<MediaDetails />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/events/create" element={<EventRegistration />} />
-            <Route path="/discussion/:eventId" element={<DiscussionPage />} />
-       </Routes>
+    <div>
+      <ToastContainer position="bottom-right" />
+      <Navbar />
+      <SearchBarWithFilters />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/explore" element={<ExploreTrending timeWindow="week" />}/>
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/:mediaType/:id" element={<MediaDetails />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/events/create" element={<EventRegistration />} />
+        <Route path="/discussion/:eventId" element={<DiscussionPage />} />
+        <Route path="/create-group" element={<CreateGroupForm />}></Route>
+        <Route path="/join-group" element={<JoinGroupForm />} />
+        <Route path="/group/:groupId" element={<GroupDetails />} />
+        <Route path="/groups" element={<Groups />}></Route>
+      </Routes>
     </div>
   );
 };

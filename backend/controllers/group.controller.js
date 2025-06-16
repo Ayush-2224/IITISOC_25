@@ -1,123 +1,90 @@
 import Group from "../models/groups.model.js";
- // optional, if needed for user checks
 import crypto from "crypto";
 
 // Create Group
 export const createGroup = async (req, res) => {
   try {
-    console.log("Body received:", req.body);
+    const { name, createdBy ,description,members} = req.body;
 
-    const { name, createdBy, eventDate, location, notes, watchlist } = req.body;
-
-    if (!name || !createdBy) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const inviteToken = crypto.randomBytes(16).toString("hex");
-    console.log("Generated invite token:", inviteToken);
+    const inviteToken = crypto.randomBytes(8).toString("hex");
 
     const group = new Group({
       name,
       createdBy,
-      eventDate,
-      location,
-      notes,
       inviteToken,
-      watchlist,
-      members: [createdBy],
+      members,
+      description
     });
 
     await group.save();
-
-    console.log("Group saved successfully:", group);
     res.status(201).json(group);
-
   } catch (err) {
-    console.error("Create group error:", err); // Add this line
+    console.log(err)
     res.status(500).json({ error: err.message });
   }
 };
 
+// join group
+export const joinGroup = async (req, res) => {
+  const { token } = req.params;
+  const { userId } = req.body;
 
-// Get Group by ID
-export const getGroupById = async (req, res) => {
   try {
-    const group = await Group.findById(req.params.id)
-      .populate("createdBy", "name email")
-      .populate("members", "name email")
-      .populate("watchlist");
-
-    if (!group) return res.status(404).json({ error: "Group not found" });
-    res.json(group);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Update Group
-export const updateGroup = async (req, res) => {
-  try {
-    const group = await Group.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!group) return res.status(404).json({ error: "Group not found" });
-    res.json(group);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Delete Group
-export const deleteGroup = async (req, res) => {
-  try {
-    const group = await Group.findByIdAndDelete(req.params.id);
-    if (!group) return res.status(404).json({ error: "Group not found" });
-    res.json({ message: "Group deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Add Member to Group
-export const addMember = async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const group = await Group.findById(req.params.id);
-    if (!group) return res.status(404).json({ error: "Group not found" });
+    const group = await Group.findOne({ inviteToken: token });
+    if (!group) return res.status(404).json({ error: "Invalid invite link" });
 
     if (!group.members.includes(userId)) {
       group.members.push(userId);
       await group.save();
     }
 
-    res.json(group);
+    res.status(200).json({ message: "Joined group successfully", group });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Remove Member from Group
-export const removeMember = async (req, res) => {
+
+// get user groups
+export const getUserGroups = async (req, res) => {
+  const { userId } = req.params;
   try {
-    const { userId } = req.body;
-    const group = await Group.findById(req.params.id);
-    if (!group) return res.status(404).json({ error: "Group not found" });
-
-    group.members = group.members.filter((id) => id.toString() !== userId);
-    await group.save();
-
-    res.json(group);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Get All Groups (optional: filtered by creator)
-export const getAllGroups = async (req, res) => {
-  try {
-    const filter = req.query.createdBy ? { createdBy: req.query.createdBy } : {};
-    const groups = await Group.find(filter).populate("createdBy", "name").sort({ createdAt: -1 });
+    const groups = await Group.find({ members: userId });
     res.json(groups);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// get group by id
+export const getGroupById = async (req, res) => {
+  console.log(req.params.id)
+  try {
+    const group = await Group.findById(req.params.id)
+  .populate("members", "name email")
+  .populate("createdBy", "name email"); // Optional, if needed
+
+    res.json(group);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// delete the group
+export const deleteGroup = async (req, res) => {
+  const groupId = req.params.id;
+
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) return res.status(404).json({ message: "Group not found" });
+
+    // Optional: Only allow creator to delete
+    if (group.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized to delete this group" });
+    }
+
+    await group.deleteOne();
+    res.status(200).json({ message: "Group deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

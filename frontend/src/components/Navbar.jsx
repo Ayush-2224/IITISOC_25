@@ -28,6 +28,15 @@ const Navbar = () => {
         </div>{" "}
       </Link>
 
+      <Link to="/groups">
+        {" "}
+        <div className="text-xl font-bold text-blue-600">
+          Groups
+        </div>{" "}
+      </Link>
+
+
+
       {/* Account Dropdown */}
       <div className="relative">
         <button
