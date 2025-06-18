@@ -28,7 +28,7 @@ const MediaDetails = () => {
   if (!details) return <p className="text-center mt-10">Loading...</p>;
 
   return (
-    <div className=" mx-auto p-4 bg-black">
+    <div className=" mx-auto p-4 bg-black text-white">
       <div className="flex flex-col md:flex-row gap-6">
         <img
           src={`https://image.tmdb.org/t/p/w500${details.poster_path}`}
@@ -56,7 +56,7 @@ const MediaDetails = () => {
       {/*  Casting and trailer */}
       {details.credits?.cast?.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-2">Top Cast</h2>
+          <h2 className="text-xl font-semibold mb-2 text-white">Top Cast</h2>
           <div className="flex gap-4 overflow-x-auto">
             {details.credits.cast.slice(0, 10).map((actor) => (
               <div key={actor.id} className="text-center min-w-[80px]">

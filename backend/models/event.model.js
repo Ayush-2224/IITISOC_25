@@ -7,8 +7,13 @@ const eventSchema = new mongoose.Schema({
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "user2",
         required: true,
+    },
+    Group:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Group",
+        required: false,
     },
     dateTime: {
         type: Date,
@@ -17,24 +22,11 @@ const eventSchema = new mongoose.Schema({
     notes: {
         type: String,
     },
-    invitedEmails: [
+    participants: [
         {
-            type: String,
-            match: /.+@.+..+/,
-        },
-    ],
-    participantStatus: [
-        {
-            user: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
-            },
-            status: {
-                type: String,
-                enum: ["pending", "accepted", "declined"],
-                default: "pending",
-            },
-        },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "user2",
+        }
     ],
     suggestedMovies: [
         {
@@ -52,6 +44,13 @@ const eventSchema = new mongoose.Schema({
         },
     },
 }, { timestamps: true });
+
+eventSchema.pre("save", function (next) {
+    if (!this.participants.includes(this.createdBy)) {
+        this.participants.push(this.createdBy);
+    }
+    next();
+});
 
 const Event = mongoose.model("Event", eventSchema);
 export default Event;

@@ -17,6 +17,7 @@ import CreateGroupForm from "./pages/createGroup";
 import JoinGroupForm from "./pages/JoinGroupForm";
 import GroupDetails from "./pages/GroupDetails";
 import Groups from "./pages/Groups";
+import Event from "./pages/Event";
 import Auth from "./components/Auth"; // Google Auth component
 
 const App = () => {
@@ -34,7 +35,8 @@ const App = () => {
         <Route path="/:mediaType/:id" element={<MediaDetails />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/events/create" element={<EventRegistration />} />
+        <Route path="/events/create/:groupId" element={<EventRegistration />} />
+        <Route path="/events/:eventId" element={<Event />} />
         <Route path="/discussion/:groupId" element={<DiscussionPage />} />
         <Route path="/create-group" element={<CreateGroupForm />}></Route>
         <Route path="/join-group" element={<JoinGroupForm />} />

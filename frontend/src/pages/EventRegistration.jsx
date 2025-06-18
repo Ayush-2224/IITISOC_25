@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import { useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 const EventRegistration = () => {
   const navigate = useNavigate();
+  let { groupId } = useParams();
+  groupId = groupId === '__null__' ? null : groupId;
+  const token = localStorage.getItem("token")
   const [formData, setFormData] = useState({
     title: '',
     dateTime: '',
     notes: '',
-    invitedEmails: [''],
+    Group: groupId,
     sendReminder: false,
     reminderTime: '',
   });
@@ -28,14 +32,7 @@ const EventRegistration = () => {
       setError('Reminder time is required when reminder is enabled');
       return false;
     }
-    const invalidEmails = formData.invitedEmails
-      .filter(email => email.trim() !== '')
-      .filter(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-    
-    if (invalidEmails.length > 0) {
-      setError('Please enter valid email addresses');
-      return false;
-    }
+  
     return true;
   };
 
@@ -47,28 +44,7 @@ const EventRegistration = () => {
     }));
   };
 
-  const handleEmailChange = (index, value) => {
-    const newEmails = [...formData.invitedEmails];
-    newEmails[index] = value;
-    setFormData(prev => ({
-      ...prev,
-      invitedEmails: newEmails
-    }));
-  };
 
-  const addEmailField = () => {
-    setFormData(prev => ({
-      ...prev,
-      invitedEmails: [...prev.invitedEmails, '']
-    }));
-  };
-
-  const removeEmailField = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      invitedEmails: prev.invitedEmails.filter((_, i) => i !== index)
-    }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,24 +56,24 @@ const EventRegistration = () => {
 
     setLoading(true);
 
+    
+    // Prepare the data according to the backend model
+    const eventData = {
+      title: formData.title.trim(),
+      dateTime: new Date(formData.dateTime).toISOString(),
+      notes: formData.notes.trim(),
+      Group: groupId,
+      reminder: {
+        sendReminder: formData.sendReminder,
+        reminderTime: formData.sendReminder ? new Date(formData.reminderTime).toISOString() : null
+      }
+    };
     try {
-      // Filter out empty emails
-      const filteredEmails = formData.invitedEmails.filter(email => email.trim() !== '');
-      
-      // Prepare the data according to the backend model
-      const eventData = {
-        title: formData.title.trim(),
-        dateTime: new Date(formData.dateTime).toISOString(),
-        notes: formData.notes.trim(),
-        invitedEmails: filteredEmails,
-        reminder: {
-          sendReminder: formData.sendReminder,
-          reminderTime: formData.sendReminder ? new Date(formData.reminderTime).toISOString() : null
-        }
-      };
-
-      const response = await axios.post('/api/events', eventData);
-      navigate('/events'); // Redirect to events list after successful creation
+      const response = await axios.post('http://localhost:4000/api/events/create', eventData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }});
+      toast.success("Event created") // Redirect to events list after successful creation
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create event');
     } finally {
@@ -163,38 +139,6 @@ const EventRegistration = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Invite People
-            </label>
-            {formData.invitedEmails.map((email, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => handleEmailChange(index, e.target.value)}
-                  placeholder="email@example.com"
-                  className="p-2 flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                {index > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeEmailField(index)}
-                    className="px-3 py-2 text-red-600 hover:text-red-800"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addEmailField}
-              className="mt-2 text-sm text-indigo-600 hover:text-indigo-800"
-            >
-              + Add another email
-            </button>
-          </div>
 
           <div className="flex items-center">
             <input

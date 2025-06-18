@@ -8,12 +8,13 @@ const GroupDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
-
+  const [events, setEvents] = useState([]);
  
 
   useEffect(() => {
     const fetchGroup = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(`http://localhost:4000/api/group/${groupId}`,{
     headers: {
       Authorization: `Bearer ${token}`,
@@ -27,7 +28,24 @@ const GroupDetails = () => {
       }
     };
 
+    // const fetchEvents = async () => {
+    //   try {
+    //     setLoading(true);
+    //     const res = await axios.get(`http://localhost:4000/api/events/getGroup/${groupId}`, {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     });
+    //     setEvents(res.data);
+    //   } catch (err) {
+    //     console.error("Error fetching group events:", err);
+    //   }finally {
+    //     setLoading(false);
+    //   }
+    // }
+
     fetchGroup();
+    // fetchEvents();
   }, [groupId]);
   
 

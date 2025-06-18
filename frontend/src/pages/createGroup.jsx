@@ -82,7 +82,7 @@ const CreateGroupForm = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-black shadow rounded">
+    <div className="max-w-xl mx-auto p-6 bg-black shadow rounded text-white">
       <h2 className="text-xl font-bold mb-4">Create a Group</h2>
       <form onSubmit={handleCreate} className="flex flex-col gap-3">
         <input

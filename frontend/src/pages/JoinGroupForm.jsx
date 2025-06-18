@@ -26,7 +26,7 @@ const JoinGroupForm = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 mt-10 bg-black shadow rounded">
+    <div className="max-w-md mx-auto p-6 mt-10 bg-black shadow rounded text-white">
       <h2 className="text-xl font-bold mb-4">Join a Group</h2>
       <input
         type="text"

@@ -23,7 +23,7 @@ const historySchema = new mongoose.Schema({
     attendees: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            ref: "user2",
         },
     ],
     notes: {
