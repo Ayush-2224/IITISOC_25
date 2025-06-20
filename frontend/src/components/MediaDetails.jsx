@@ -2,12 +2,44 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
-const API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62"; // Replace with your key
+const API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62";
 
 const MediaDetails = () => {
   const { id } = useParams();
-  const [details, setDetails] = useState(null);
+  console.log(id);
+  const [details, setDetails] = useState([]);
 
+  const handleAddToWatchlist = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login to add to watchlist");
+      return;
+    }
+
+    try {
+      await axios.post(
+        "http://localhost:4000/api/watchlist/add",
+        {
+          movieId: id,
+          title: details.title,
+          posterUrl: `https://image.tmdb.org/t/p/w500${details.poster_path}`,
+          rating: details.vote_average,
+          year: details.release_date?.split("-")[0],
+          genres: details.genres.map((g) => g.name),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("Movie added to your watchlist!");
+    } catch (err) {
+      console.error("Error adding to watchlist:", err);
+      alert("Failed to add to watchlist");
+    }
+  };
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -22,8 +54,6 @@ const MediaDetails = () => {
 
     fetchDetails();
   }, [id]);
-
-  const handleAddToWatchlist = () => {};
 
   if (!details) return <p className="text-center mt-10">Loading...</p>;
 

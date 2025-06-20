@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen1, setDropdownOpen1] = useState(false);
   const { token, settoken } = useContext(Context);
   const navigate = useNavigate();
 
@@ -29,14 +30,47 @@ const Navbar = () => {
         </div>{" "}
       </Link>
 
-      <Link to="/groups">
-        {" "}
-        <div className="text-xl font-bold text-blue-600">
-          Groups
-        </div>{" "}
+      <Link
+        to="/watchlist"
+        className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-4 py-2 rounded shadow transition duration-200"
+      >
+        🎞️ Watchlist
       </Link>
 
+      <div className="relative">
+        <button
+          onClick={() => setDropdownOpen1(!dropdownOpen1)}
+          className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg focus:outline-none"
+        >
+          Groups ⏷
+        </button>
 
+        {dropdownOpen1 && (
+          <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50">
+            <Link
+              to="/groups"
+              className="block px-4 py-2 hover:bg-gray-100"
+              onClick={() => setDropdownOpen1(false)}
+            >
+              All Groups
+            </Link>
+            <Link
+              to="/create-group"
+              className="block px-4 py-2 hover:bg-gray-100"
+              onClick={() => setDropdownOpen1(false)}
+            >
+              Create Group
+            </Link>
+            <Link
+              to="/join-group"
+              className="block px-4 py-2 hover:bg-gray-100"
+              onClick={() => setDropdownOpen1(false)}
+            >
+              Join Group
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Account Dropdown */}
       <div className="relative">

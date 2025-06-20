@@ -7,7 +7,7 @@ const createEvent = async (req, res, next) =>{
     const {title, dateTime, notes, Group, reminderTime} = req.body;
     const userId = req.user.id;
     try{
-        console.log(Group);
+        console.log("groupid:",Group);
         
         const event = await Event.create({
             title,
@@ -20,7 +20,7 @@ const createEvent = async (req, res, next) =>{
                 reminderTime: reminderTime ? new Date(reminderTime) : null,
             },
         })
-        console.log(event._id);
+        console.log("event:",event._id);
         
         res.status(201).json({
             message: "Event created successfully",
@@ -36,6 +36,7 @@ const createEvent = async (req, res, next) =>{
 const getEvent = async (req, res, next) =>{
     const {eventId} = req.params;
     const userId = req.user.id;
+    console.log("event Id;",eventId)
     
     try{
         const event = await Event.findById(eventId)
@@ -73,6 +74,7 @@ const getEvent = async (req, res, next) =>{
 
 const getEventsbyUser = async (req, res, next) =>{
     const userId = req.user.id;
+    console.log("userid",userId);
     try{
         const events = await Event.find({createdBy: userId}).select('-Group -notes -participants');
         res.status(200).json({
@@ -84,14 +86,18 @@ const getEventsbyUser = async (req, res, next) =>{
     }
 }
 const getEventsbyGroup = async (req, res, next) =>{
+    console.log(req)
     const userId = req.user.id;
     const GroupId = req.params.groupId;
+    console.log(userId)
+    console.log(GroupId)
     try{
         const group = await Group.find(GroupId, {members: userId}).select('-Group -notes -participants');
         if(!group){
             return next(new HttpError("Group not found or you are not a member of this group", 404));
         }
         const events = await Event.find({Group: GroupId});
+        console.log(events)
         res.status(200).json({
             message: "Events fetched successfully",
             events
@@ -143,25 +149,28 @@ const updateEvent = async (req, res, next) =>{
 }
 
 
-const deleteEvent = async (req, res, next) =>{
-    const {eventId} = req.params;
-    const userId = req.user.id;
-    try{
-        const event = await Event.findOne(eventId);
-        if(!event){
-            return next(new HttpError("Event not found", 404));
-        }
-        if(event.createdBy.toString() !== userId.toString()){
-            return next(new HttpError("You are not authorized to delete this event", 403));
-        }
-        await event.deleteOne();
-        res.status(200).json({
-            message: "Event deleted successfully",
-        })
-    }catch(error){
-        return next(new HttpError(error.message, 400));
+const deleteEvent = async (req, res) => {
+    // console.log(req.body)
+  const eventId = req.body.eventId;
+  const userId = req.user.id;
+  console.log(eventId)
+
+  try {
+    const event = await Event.findById(eventId).populate("Group");
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    const group = await Group.findById(event.Group);
+    if (!group || group.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: "Not authorized to delete" });
     }
-}
+
+    await Event.findByIdAndDelete(eventId);
+    res.status(200).json({ message: "Event deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 const joinEvent = async (req, res, next) =>{
     const userId = req.user.id;
