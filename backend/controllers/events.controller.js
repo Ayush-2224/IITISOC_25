@@ -88,23 +88,26 @@ const getEventsbyUser = async (req, res, next) => {
     }
 }
 const getEventsbyGroup = async (req, res, next) => {
-    console.log(req)
+    //console.log(req)
     const userId = req.user.id;
     const GroupId = req.params.groupId;
     console.log(userId)
     console.log(GroupId)
     try {
-        const group = await Group.find(GroupId, { members: userId }).select('-Group -notes -participants');
+        const group = await Group.findOne({ _id: GroupId, members: userId })
+  .select('-Group -notes -participants'); 
         if (!group) {
+            console.log("group not found or you are not a member of this group")
             return next(new HttpError("Group not found or you are not a member of this group", 404));
         }
         const events = await Event.find({ Group: GroupId });
-        console.log(events)
+        console.log("what",events)
         res.status(200).json({
             message: "Events fetched successfully",
             events
         })
     } catch (error) {
+        console.log(error);
         return next(new HttpError(error.message, 400));
     }
 }

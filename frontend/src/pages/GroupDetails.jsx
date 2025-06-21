@@ -37,7 +37,7 @@ const GroupDetails = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `http://localhost:4000/api/events/getUser`,
+          `http://localhost:4000/api/events/getGroup/${groupId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

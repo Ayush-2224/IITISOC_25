@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 const EventRegistration = () => {
   const navigate = useNavigate();
   let { groupId } = useParams();
-  groupId = groupId === "__null__" ? null : groupId;
+  groupId = (groupId === "__null__") ? null : groupId;
   const token = localStorage.getItem("token");
   const [formData, setFormData] = useState({
     title: "",
