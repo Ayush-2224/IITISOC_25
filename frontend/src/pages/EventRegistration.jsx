@@ -1,62 +1,59 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 const EventRegistration = () => {
   const navigate = useNavigate();
   let { groupId } = useParams();
-  groupId = groupId === '__null__' ? null : groupId;
-  const token = localStorage.getItem("token")
+  groupId = (groupId === "__null__") ? null : groupId;
+  const token = localStorage.getItem("token");
   const [formData, setFormData] = useState({
-    title: '',
-    dateTime: '',
-    notes: '',
+    title: "",
+    dateTime: "",
+    notes: "",
     Group: groupId,
     sendReminder: false,
-    reminderTime: '',
+    reminderTime: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      setError('Event title is required');
+      setError("Event title is required");
       return false;
     }
     if (!formData.dateTime) {
-      setError('Date and time is required');
+      setError("Date and time is required");
       return false;
     }
     if (formData.sendReminder && !formData.reminderTime) {
-      setError('Reminder time is required when reminder is enabled');
+      setError("Reminder time is required when reminder is enabled");
       return false;
     }
-  
+
     return true;
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
 
-    
     // Prepare the data according to the backend model
     const eventData = {
       title: formData.title.trim(),
@@ -65,17 +62,25 @@ const EventRegistration = () => {
       Group: groupId,
       reminder: {
         sendReminder: formData.sendReminder,
-        reminderTime: formData.sendReminder ? new Date(formData.reminderTime).toISOString() : null
-      }
+        reminderTime: formData.sendReminder
+          ? new Date(formData.reminderTime).toISOString()
+          : null,
+      },
     };
     try {
-      const response = await axios.post('http://localhost:4000/api/events/create', eventData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    }});
-      toast.success("Event created") // Redirect to events list after successful creation
+      const response = await axios.post(
+        "http://localhost:4000/api/events/create",
+        eventData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success("Event created");
+      navigate(`/group/${groupId}`); // Redirect to events list after successful creation
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create event');
+      setError(err.response?.data?.message || "Failed to create event");
     } finally {
       setLoading(false);
     }
@@ -87,7 +92,7 @@ const EventRegistration = () => {
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
           Create New Event
         </h2>
-        
+
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
@@ -96,7 +101,10 @@ const EventRegistration = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700"
+            >
               Event Title
             </label>
             <input
@@ -111,7 +119,10 @@ const EventRegistration = () => {
           </div>
 
           <div>
-            <label htmlFor="dateTime" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="dateTime"
+              className="block text-sm font-medium text-gray-700"
+            >
               Date and Time
             </label>
             <input
@@ -126,7 +137,10 @@ const EventRegistration = () => {
           </div>
 
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="notes"
+              className="block text-sm font-medium text-gray-700"
+            >
               Notes
             </label>
             <textarea
@@ -139,7 +153,6 @@ const EventRegistration = () => {
             />
           </div>
 
-
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -149,14 +162,20 @@ const EventRegistration = () => {
               onChange={handleChange}
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
             />
-            <label htmlFor="sendReminder" className="ml-2 block text-sm text-gray-900">
+            <label
+              htmlFor="sendReminder"
+              className="ml-2 block text-sm text-gray-900"
+            >
               Send reminder
             </label>
           </div>
 
           {formData.sendReminder && (
             <div>
-              <label htmlFor="reminderTime" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="reminderTime"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Reminder Time
               </label>
               <input
@@ -176,7 +195,7 @@ const EventRegistration = () => {
               disabled={loading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {loading ? 'Creating...' : 'Create Event'}
+              {loading ? "Creating..." : "Create Event"}
             </button>
           </div>
         </form>
@@ -185,4 +204,4 @@ const EventRegistration = () => {
   );
 };
 
-export default EventRegistration; 
+export default EventRegistration;

@@ -1,24 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
+import UpcomingEvents from "../components/UpcomingEvents.jsx";
 
 const GroupDetails = () => {
   const { groupId } = useParams();
-  const [group, setGroup] = useState(null);
+  const [group, setGroup] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
   const [events, setEvents] = useState([]);
- 
 
   useEffect(() => {
     const fetchGroup = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`http://localhost:4000/api/group/${groupId}`,{
-    headers: {
-      Authorization: `Bearer ${token}`,
-    }});
+        const res = await axios.get(
+          `http://localhost:4000/api/group/${groupId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(res);
         setGroup(res.data);
         setLoading(false);
       } catch (err) {
@@ -28,26 +33,29 @@ const GroupDetails = () => {
       }
     };
 
-    // const fetchEvents = async () => {
-    //   try {
-    //     setLoading(true);
-    //     const res = await axios.get(`http://localhost:4000/api/events/getGroup/${groupId}`, {
-    //       headers: {
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     });
-    //     setEvents(res.data);
-    //   } catch (err) {
-    //     console.error("Error fetching group events:", err);
-    //   }finally {
-    //     setLoading(false);
-    //   }
-    // }
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(
+          `http://localhost:4000/api/events/getGroup/${groupId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(res);
+        setEvents(res.data.events);
+      } catch (err) {
+        console.error("Error fetching group events:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchGroup();
-    // fetchEvents();
+    fetchEvents();
   }, [groupId]);
-  
 
   if (loading) {
     return <div className="text-center text-white mt-8">Loading group...</div>;
@@ -81,13 +89,29 @@ const GroupDetails = () => {
           <p className="text-gray-400">No members yet.</p>
         )}
       </ul>
-      <Link
-  to={`/discussion/${groupId}`}
-  className="inline-block mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition duration-200"
->
-  💬 Chat with your friends
-</Link>
 
+      <UpcomingEvents
+        events={events}
+        userId={localStorage.getItem("userId")}
+        groupCreatorId={group?.createdBy?._id}
+        onDelete={(deletedId) =>
+          setEvents((prev) => prev.filter((e) => e._id !== deletedId))
+        }
+      />
+      <div className="flex gap-10">
+        <Link
+          to={`/discussion/${groupId}`}
+          className="inline-block mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition duration-200"
+        >
+          💬 Chat with your friends
+        </Link>
+        <Link
+          to={`/events/create/${groupId}`}
+          className="inline-block mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition duration-200"
+        >
+          Create an Event
+        </Link>
+      </div>
     </div>
   );
 };

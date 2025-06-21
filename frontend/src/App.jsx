@@ -19,7 +19,8 @@ import GroupDetails from "./pages/GroupDetails";
 import Groups from "./pages/Groups";
 import Event from "./pages/Event";
 import Auth from "./components/Auth"; // Google Auth component
-
+import MyWatchlists from "./pages/Mywatchlist.jsx";
+import RecommendedMovies from "./pages/Reccommend.jsx";
 const App = () => {
   return (
     <div>
@@ -42,7 +43,9 @@ const App = () => {
         <Route path="/join-group" element={<JoinGroupForm />} />
         <Route path="/group/:groupId" element={<GroupDetails />} />
         <Route path="/groups" element={<Groups />}></Route>
-        
+        <Route path="/watchlist" element={<MyWatchlists />}></Route>
+        <Route path="/group/:groupId/recommend" element={<RecommendedMovies />} />
+
             <Route path="/auth" element={<Auth />} />
       </Routes>
     </div>

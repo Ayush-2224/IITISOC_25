@@ -12,22 +12,12 @@ const historySchema = new mongoose.Schema({
         required: true,
     },
     watchedMovie: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Movie",
+        type:String,
         required: true,
     },
     watchedOn: {
         type: Date,
         required: true,
-    },
-    attendees: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "user2",
-        },
-    ],
-    notes: {
-        type: String,
     }
 }, { timestamps: true });
 
