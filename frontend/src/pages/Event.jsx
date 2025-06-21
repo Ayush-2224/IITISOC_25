@@ -15,7 +15,7 @@ const Event = () => {
         dateTime: '',
         notes: '',
         sendReminder: false,
-        reminderTime: ''
+        reminderTime: ''  
     });
     const [allowedToEdit, setAllowedToEdit] = useState(false);
     useEffect(() => {
