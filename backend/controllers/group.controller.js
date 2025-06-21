@@ -1,6 +1,7 @@
 import Group from "../models/groups.model.js";
 import crypto from "crypto";
-
+import History from "../models/history.model.js";
+import axios from "axios";
 // Create Group
 export const createGroup = async (req, res) => {
   try {
@@ -87,5 +88,35 @@ export const deleteGroup = async (req, res) => {
     res.status(200).json({ message: "Group deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+export const recommendMovie = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    const history = await History.findOne({ group: groupId });
+    if (!history) {
+      return res.status(404).json({ message: "No history found for this group" });
+    }
+
+    const watchedIds = history.watchedMovie || []; // now an array of string movie IDs
+
+    if (watchedIds.length === 0) {
+      return res.status(400).json({ message: "No movies found in group history" });
+    }
+
+    const response = await axios.post("http://localhost:5000/recommend", {
+      watchedIds: watchedIds, // pass full array
+    });
+
+    if (response.data && Array.isArray(response.data)) {
+      return res.status(200).json({ recommendedMovies: response.data });
+    } else {
+      return res.status(404).json({ message: "No recommendations found" });
+    }
+  } catch (error) {
+    console.error("Error recommending movie:", error.message || error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };

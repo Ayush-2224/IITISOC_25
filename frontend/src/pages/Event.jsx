@@ -129,8 +129,8 @@ const Event = () => {
             <strong>Reminder:</strong>{" "}
             {event.reminder?.sendReminder
               ? `Set for ${new Date(
-                  event.reminder.reminderTime
-                ).toLocaleString()}`
+                event.reminder.reminderTime
+              ).toLocaleString()}`
               : "No reminder set"}
           </p>
 
@@ -167,20 +167,23 @@ const Event = () => {
           <div className="mt-10">
             <h3 className="text-2xl font-semibold mb-3">🎬 Suggested Movies</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              {event.suggestedMovies.map((m) => (
-                <div key={m._id} className="bg-gray-800 p-4 rounded-lg">
+              {event.suggestedMovies.map((m, i) => (
+                <div key={m._id || i} className="bg-gray-800 p-4 rounded-lg">
                   <img
-                    src={m.posterUrl}
-                    alt={m.title}
+                    src={m.posterUrl || "https://via.placeholder.com/300x400?text=No+Image"}
+                    alt={m.title || "No Title"}
                     className="w-full h-60 object-cover rounded mb-2"
                   />
                   <h4 className="font-bold">
-                    {m.title} ({m.year})
+                    {m.title || "Untitled"} {m.year ? `(${m.year})` : ""}
                   </h4>
-                  <p className="text-sm">⭐ {m.rating}</p>
-                  <p className="text-sm text-gray-400">{m.genres.join(", ")}</p>
+                  <p className="text-sm">⭐ {m.rating || "N/A"}</p>
+                  <p className="text-sm text-gray-400">
+                    {Array.isArray(m.genres) ? m.genres.join(", ") : "No genres"}
+                  </p>
                 </div>
               ))}
+
             </div>
           </div>
         </>

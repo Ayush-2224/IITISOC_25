@@ -3,12 +3,14 @@ import HttpError from "../models/httperror.js";
 import Group from "../models/groups.model.js";
 import Movie from "../models/movie.model.js";
 import User from "../models/user.model.js";
-const createEvent = async (req, res, next) =>{
-    const {title, dateTime, notes, Group, reminderTime} = req.body;
+import History from "../models/history.model.js";
+import { now } from "mongoose";
+const createEvent = async (req, res, next) => {
+    const { title, dateTime, notes, Group, reminderTime } = req.body;
     const userId = req.user.id;
-    try{
-        console.log("groupid:",Group);
-        
+    try {
+        console.log("groupid:", Group);
+
         const event = await Event.create({
             title,
             createdBy: userId,
@@ -20,130 +22,130 @@ const createEvent = async (req, res, next) =>{
                 reminderTime: reminderTime ? new Date(reminderTime) : null,
             },
         })
-        console.log("event:",event._id);
-        
+        console.log("event:", event._id);
+
         res.status(201).json({
             message: "Event created successfully",
             event,
         })
-    }catch(error){
+    } catch (error) {
         console.log(error);
-        
+
         return next(new HttpError(error.message, 400));
     }
 }
 
-const getEvent = async (req, res, next) =>{
-    const {eventId} = req.params;
+const getEvent = async (req, res, next) => {
+    const { eventId } = req.params;
     const userId = req.user.id;
-    console.log("event Id;",eventId)
-    
-    try{
+    console.log("event Id;", eventId)
+
+    try {
         const event = await Event.findById(eventId)
-    .populate({
-        path: 'participants',
-        select: 'name profilePic'
-    })
-    .populate({
-        path: 'suggestedMovies',
-        select: 'title posterUrl rating year genres'
-    }).populate({
-        path: 'createdBy',
-        select: 'name profilePic'
-    });
-        
-        if(!event){
-            
+            .populate({
+                path: 'participants',
+                select: 'name profilePic'
+            })
+            .populate({
+                path: 'suggestedMovies',
+                select: 'title posterUrl rating year genres'
+            }).populate({
+                path: 'createdBy',
+                select: 'name profilePic'
+            });
+
+        if (!event) {
+
             return next(new HttpError("Event not found", 404));
         }
         const group = event.Group ? await Group.findById(event.Group) : null;
-        if((event.createdBy._id.toString() !== userId.toString() && !group) || (group && !group.members.includes(userId))){
+        if ((event.createdBy._id.toString() !== userId.toString() && !group) || (group && !group.members.includes(userId))) {
 
             return next(new HttpError("You are not authorized to view this event", 403));
         }
         res.status(200).json({
-    event,
-    allowEditing: event.createdBy._id.toString() === userId.toString()
-});
-    }catch(error){
+            event,
+            allowEditing: event.createdBy._id.toString() === userId.toString()
+        });
+    } catch (error) {
         console.log(error);
-        
+
         return next(new HttpError(error.message, 400));
     }
 }
 
-const getEventsbyUser = async (req, res, next) =>{
+const getEventsbyUser = async (req, res, next) => {
     const userId = req.user.id;
-    console.log("userid",userId);
-    try{
-        const events = await Event.find({createdBy: userId}).select('-Group -notes -participants');
+    console.log("userid", userId);
+    try {
+        const events = await Event.find({ createdBy: userId }).select('-Group -notes -participants');
         res.status(200).json({
             message: "Events fetched successfully",
             events,
         })
-    }catch(error){
+    } catch (error) {
         return next(new HttpError(error.message, 400));
     }
 }
-const getEventsbyGroup = async (req, res, next) =>{
+const getEventsbyGroup = async (req, res, next) => {
     console.log(req)
     const userId = req.user.id;
     const GroupId = req.params.groupId;
     console.log(userId)
     console.log(GroupId)
-    try{
-        const group = await Group.find(GroupId, {members: userId}).select('-Group -notes -participants');
-        if(!group){
+    try {
+        const group = await Group.find(GroupId, { members: userId }).select('-Group -notes -participants');
+        if (!group) {
             return next(new HttpError("Group not found or you are not a member of this group", 404));
         }
-        const events = await Event.find({Group: GroupId});
+        const events = await Event.find({ Group: GroupId });
         console.log(events)
         res.status(200).json({
             message: "Events fetched successfully",
             events
         })
-    }catch(error){
+    } catch (error) {
         return next(new HttpError(error.message, 400));
     }
 }
 
-const updateEvent = async (req, res, next) =>{
-    const {eventId} = req.params;
-    const {title, dateTime, notes, reminderTime} = req.body;
+const updateEvent = async (req, res, next) => {
+    const { eventId } = req.params;
+    const { title, dateTime, notes, reminderTime } = req.body;
     const userId = req.user.id;
-    try{
+    try {
         const event = await Event.findById(eventId);
-        if(!event){
+        if (!event) {
             return next(new HttpError("Event not found", 404));
         }
-        if(event.createdBy.toString() !== userId.toString()){
+        if (event.createdBy.toString() !== userId.toString()) {
             return next(new HttpError("You are not authorized to update this event", 403));
         }
 
-        if(event.dateTime < new Date()){
+        if (event.dateTime < new Date()) {
             return next(new HttpError("You cannot update an event that has already passed", 400));
         }
-        if(title){
+        if (title) {
             event.title = title;
         }
-        if(dateTime){
+        if (dateTime) {
             event.dateTime = dateTime;
         }
-        if(notes){
+        if (notes) {
             event.notes = notes;
         }
-        if(reminderTime){
-            event.reminder.sendReminder =  true;
-            event.reminder.reminderTime =  new Date(reminderTime);
+        if (reminderTime) {
+            event.reminder.sendReminder = true;
+            event.reminder.reminderTime = new Date(reminderTime);
         }
         await event.save();
         res.status(200).json({
             message: "Event updated successfully",
             event,
         })
-    }catch(error){
+    } catch (error) {
         console.log(error);
-        
+
         return next(new HttpError(error.message, 400));
     }
 }
@@ -151,47 +153,47 @@ const updateEvent = async (req, res, next) =>{
 
 const deleteEvent = async (req, res) => {
     // console.log(req.body)
-  const eventId = req.body.eventId;
-  const userId = req.user.id;
-  console.log(eventId)
+    const eventId = req.body.eventId;
+    const userId = req.user.id;
+    console.log(eventId)
 
-  try {
-    const event = await Event.findById(eventId).populate("Group");
-    if (!event) return res.status(404).json({ message: "Event not found" });
+    try {
+        const event = await Event.findById(eventId).populate("Group");
+        if (!event) return res.status(404).json({ message: "Event not found" });
 
-    const group = await Group.findById(event.Group);
-    if (!group || group.createdBy.toString() !== userId) {
-      return res.status(403).json({ message: "Not authorized to delete" });
+        const group = await Group.findById(event.Group);
+        if (!group || group.createdBy.toString() !== userId) {
+            return res.status(403).json({ message: "Not authorized to delete" });
+        }
+
+        await Event.findByIdAndDelete(eventId);
+        res.status(200).json({ message: "Event deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
     }
-
-    await Event.findByIdAndDelete(eventId);
-    res.status(200).json({ message: "Event deleted successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
 };
 
-const joinEvent = async (req, res, next) =>{
+const joinEvent = async (req, res, next) => {
     const userId = req.user.id;
-    const {eventId} = req.params;
-    try{
+    const { eventId } = req.params;
+    try {
         const event = await Event.findById(eventId);
-        if(!event){
+        if (!event) {
             return next(new HttpError("Event not found", 404));
         }
         const groupId = event.Group;
         const group = groupId ? await Group.findById(groupId) : null;
 
-        if(!group){
+        if (!group) {
             return next(new HttpError("This is a solo event", 404));
         }
 
-        if((group && !group.members.includes(userId))){
+        if ((group && !group.members.includes(userId))) {
             return next(new HttpError("You are not a member of this group", 403));
         }
 
-        if(event.participants.includes(userId)){
+        if (event.participants.includes(userId)) {
             return next(new HttpError("You are already a participant of this event", 400));
         }
         event.participants.push(userId);
@@ -200,22 +202,23 @@ const joinEvent = async (req, res, next) =>{
             message: "You have joined the event successfully",
             event,
         })
-    }catch(error){
+    } catch (error) {
         return next(new HttpError(error.message, 400));
     }
 }
-
+// creator leaves then what happens?
 const leaveEvent = async (req, res, next) => {
     const userId = req.user.id;
-    const {eventId} = req.params;
-    try{
+    const { eventId } = req.params;
+    try {
         const event = await Event.findById(eventId);
-        if(!event){
+        if (!event) {
             return next(new HttpError("Event not found", 404));
         }
-        if(!event.participants.includes(userId)){
+        if (!event.participants || !event.participants.some(p => p.toString() === userId.toString())) {
             return next(new HttpError("You are not a participant of this event", 400));
         }
+
         event.participants = event.participants.filter(participant => participant.toString() !== userId.toString());
         await event.save();
         res.status(200).json({
@@ -223,16 +226,85 @@ const leaveEvent = async (req, res, next) => {
             event,
         });
     }
-    catch(error){
+    catch (error) {
         return next(new HttpError(error.message, 400));
     }
 }
+const addMovieTOEvent = async (req, res, next) => {
+  try {
+    const { movieId, eventId } = req.body;
+    // console.log("movieId:", movieId);
+    // console.log("eventId:", eventId);
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ success: false, message: "Event not found" });
+    }
+
+    if (!event.suggestedMovies.includes(movieId)) {
+      event.suggestedMovies.push(movieId);
+    }
+    if (event.Group) {
+        console.log("Group event detected");
+      await History.create({
+        group: event.Group,
+        event: event._id,
+        watchedMovie: movieId,
+        watchedOn: new Date()
+      });
+    }
+
+    await event.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Movie added to event successfully",
+      event,
+    });
+
+  } catch (error) {
+    console.error("Error adding movie to event:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+const removeMovieFromEvent = async (req, res, next) => {
+  try {
+    const { movieId, eventId } = req.body;
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ success: false, message: "Event not found" });
+    }
+
+    if (!event.suggestedMovies.includes(movieId)) {
+      return res.status(400).json({ success: false, message: "Movie not found in event" });
+    }
+
+    event.suggestedMovies = event.suggestedMovies.filter(id => id !== movieId);
+    await event.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Movie removed from event successfully",
+      event,
+    });
+
+  } catch (error) {
+    console.error("Error removing movie from event:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
 
 export {
     createEvent,
+    getEvent,
     getEventsbyUser,
     getEventsbyGroup,
     updateEvent,
+    deleteEvent,
     joinEvent,
     leaveEvent,
-    deleteEvent, getEvent};
+    addMovieTOEvent,
+    removeMovieFromEvent
+};

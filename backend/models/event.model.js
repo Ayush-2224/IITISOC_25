@@ -30,8 +30,7 @@ const eventSchema = new mongoose.Schema({
     ],
     suggestedMovies: [
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Movie",
+            type:String,
         },
     ],
     reminder: {
