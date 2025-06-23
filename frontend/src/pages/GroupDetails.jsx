@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 import UpcomingEvents from "../components/UpcomingEvents.jsx";
 
 const GroupDetails = () => {
@@ -57,6 +58,53 @@ const GroupDetails = () => {
     fetchEvents();
   }, [groupId]);
 
+  const joinEvent = async (eventId) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:4000/api/events/join/${eventId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setEvents(prevEvents =>
+        prevEvents.map(e =>
+          e._id === eventId ? { ...e, isParticipant: true } : e
+        )
+      );
+      toast.success(response.data.message);
+    } catch (err) {
+      console.error("Error joining event:", err);
+      toast.error("Failed to join event");
+    }
+  };
+
+  const leaveEvent = async (eventId) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:4000/api/events/leave/${eventId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setEvents(prevEvents =>
+        prevEvents.map(e =>
+          e._id === eventId ? { ...e, isParticipant: false } : e
+        )
+      );
+      toast.success(response.data.message);
+    } catch (err) {
+      console.error("Error leaving event:", err);
+      toast.error("Failed to leave event");
+    }
+  };
+
+
   if (loading) {
     return <div className="text-center text-white mt-8">Loading group...</div>;
   }
@@ -97,6 +145,8 @@ const GroupDetails = () => {
         onDelete={(deletedId) =>
           setEvents((prev) => prev.filter((e) => e._id !== deletedId))
         }
+        joinEvent={joinEvent}
+        leaveEvent={leaveEvent}
       />
       <div className="flex gap-10">
         <Link

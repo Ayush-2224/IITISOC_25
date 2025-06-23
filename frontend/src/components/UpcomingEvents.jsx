@@ -1,8 +1,8 @@
 import React from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
-const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete }) => {
+import { toast } from "react-toastify";
+const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete,  joinEvent, leaveEvent}) => {
   const navigate = useNavigate();
   const handleDelete = async (eventId) => {
     console.log(eventId);
@@ -49,7 +49,7 @@ const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete }) => {
               🕒 {new Date(event.dateTime).toLocaleString()}
             </p>
 
-            {userId === groupCreatorId && (
+            {event.isAdmin === groupCreatorId && (
               <button
                 onClick={() => handleDelete(event._id)}
                 className="absolute top-2 right-2 text-red-500 hover:text-red-700"
@@ -59,6 +59,9 @@ const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete }) => {
               </button>
             )}
             <button onClick={() => handleClick(event._id)}>View Event</button>
+            {!event.isAdmin && (event.isParticipant ? <button className="cursor-pointer" onClick={() => leaveEvent(event._id)}>LEAVE</button> : 
+            <button onClick={() => joinEvent(event._id)} className="cursor-pointer">JOIN</button>)
+            }
           </li>
         ))}
       </ul>
