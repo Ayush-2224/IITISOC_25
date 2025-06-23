@@ -3,6 +3,7 @@ import React, { useRef } from 'react'
 import axios from "axios";
 import { useState } from "react";
 import {socket} from "../socket";
+import { FaPaperPlane, FaCamera, FaPoll, FaTimes, FaSpinner } from "react-icons/fa";
 function SendMessageBar({ groupId, user }) {
 const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -65,82 +66,131 @@ const [text, setText] = useState("");
     }
   };
 
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = null;
+  };
+
 
  return (
     <>
-      <div className="p-4 border-t bg-black flex items-center space-x-2">
-        <input
-          type="text"
-          placeholder="Type a message..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          className="flex-grow p-2 border rounded"
-          disabled={isSending}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          ref={fileInputRef}
-          className="hidden"
-          disabled={isSending}
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          title="Upload image"
-          className="btn-secondary px-3 py-2 rounded"
-          disabled={isSending}
-          type="button"
-        >
-          📷
-        </button>
-        <button
-          onClick={handleSendMessage}
-          className="btn-primary px-4 py-2 rounded"
-          disabled={isSending || (!text.trim() && !imageFile)}
-          type="button"
-        >
-          {isSending ? "Sending..." : "Send"}
-        </button>
-        <button
-          onClick={() => setShowPollDialog(true)}
-          title="Create Poll"
-          className="btn-secondary px-3 py-2 rounded"
-          type="button"
-          disabled={isSending}
-        >
-          🗳️
-        </button>
-      </div>
-
       {/* Image preview */}
       {imagePreview && (
-        <div className="p-4 border-t bg-gray-50 flex items-center space-x-4">
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="max-h-24 rounded-md object-contain"
-          />
-          <button
-            onClick={() => {
-              setImageFile(null);
-              setImagePreview(null);
-              if (fileInputRef.current) fileInputRef.current.value = null;
-            }}
-            className="text-red-600 font-bold text-xl select-none"
-            type="button"
-            aria-label="Remove image preview"
-          >
-            &times;
-          </button>
+        <div className="p-4 bg-white/5 backdrop-blur-sm border-t border-white/10">
+          <div className="flex items-center space-x-4">
+            <div className="relative group">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-h-24 rounded-xl object-contain border border-white/20 shadow-md"
+              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-white font-medium text-sm">Image Ready</h4>
+              <p className="text-gray-400 text-xs">This image will be sent with your message</p>
+            </div>
+            <button
+              onClick={removeImage}
+              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-300"
+              type="button"
+              aria-label="Remove image"
+            >
+              <FaTimes className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Message input */}
+      <div className="p-4 bg-white/5 backdrop-blur-sm border-t border-white/10">
+        <div className="flex items-center space-x-3">
+          {/* Text input */}
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Type your message..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+              disabled={isSending}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              maxLength={500}
+            />
+            {text.length > 400 && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <span className={`text-xs ${text.length > 480 ? 'text-red-400' : 'text-yellow-400'}`}>
+                  {text.length}/500
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center space-x-2">
+            {/* File input */}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              ref={fileInputRef}
+              className="hidden"
+              disabled={isSending}
+            />
+            
+            {/* Camera button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSending}
+              className="p-3 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all duration-300 group"
+              type="button"
+              title="Upload image"
+            >
+              <FaCamera className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </button>
+
+            {/* Poll button */}
+            <button
+              onClick={() => setShowPollDialog(true)}
+              disabled={isSending}
+              className="p-3 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-xl transition-all duration-300 group"
+              type="button"
+              title="Create poll"
+            >
+              <FaPoll className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </button>
+
+            {/* Send button */}
+            <button
+              onClick={handleSendMessage}
+              disabled={isSending || (!text.trim() && !imageFile)}
+              className="group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white p-3 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-purple-500/25 disabled:shadow-none"
+              type="button"
+            >
+              {isSending ? (
+                <FaSpinner className="w-4 h-4 animate-spin" />
+              ) : (
+                <FaPaperPlane className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Character count warning */}
+        {text.length > 400 && (
+          <div className="mt-2 text-center">
+            <p className={`text-xs ${text.length > 480 ? 'text-red-400' : 'text-yellow-400'}`}>
+              {text.length > 480 ? 'Message is getting too long!' : 'Message is getting long'}
+            </p>
+          </div>
+        )}
+      </div>
 
       {showPollDialog && (
         <PollDialog

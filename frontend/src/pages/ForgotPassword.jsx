@@ -72,16 +72,16 @@ function ForgotPassword() {
               Forgot Password
             </h2>
 
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600/20 to-red-600/20 rounded-full mb-4">
-                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Enter your email address and we'll send you a link to reset your password.
-              </p>
+                      <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-600/30 to-red-600/30 rounded-full mb-6 border-2 border-purple-500/20">
+              <svg className="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
             </div>
+            <p className="text-gray-400 text-base leading-relaxed max-w-sm mx-auto">
+              Enter your email address and we'll send you a magic link to reset your password and get you back to the movies! 🎬
+            </p>
+          </div>
 
             <label className="block mb-2 text-sm font-medium text-gray-300">
               Email Address
