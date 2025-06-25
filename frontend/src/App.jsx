@@ -23,6 +23,12 @@ import MyWatchlists from "./pages/Mywatchlist.jsx";
 import RecommendedMovies from "./pages/Reccommend.jsx";
 import { useEffect } from "react";
 import axios from "axios";
+import { 
+  RequireAuth, 
+  RequireGroupMembership, 
+  RequireEventAccess, 
+  RequireGroupCreation 
+} from "./components/ProtectedRoute";
 
 const App = () => {
   // Test backend connection on app load
@@ -44,6 +50,7 @@ const App = () => {
       <Navbar />
       <SearchBarWithSuggestions />
       <Routes>
+        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<Signup />} />
@@ -51,17 +58,76 @@ const App = () => {
         <Route path="/search" element={<SearchResults />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/events/create/:groupId" element={<EventRegistration />} />
-        <Route path="/events/:eventId" element={<Event />} />
-        <Route path="/discussion/:groupId" element={<DiscussionPage />} />
-        <Route path="/create-group" element={<CreateGroupForm />}></Route>
-        <Route path="/join-group" element={<JoinGroupForm />} />
-        <Route path="/group/:groupId" element={<GroupDetails />} />
-        <Route path="/groups" element={<Groups />}></Route>
-        <Route path="/watchlist" element={<MyWatchlists />}></Route>
-        <Route path="/group/:groupId/recommend" element={<RecommendedMovies />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/:mediaType/:id" element={<MediaDetails />} />
+        
+        {/* Protected Routes - Login Required */}
+        <Route path="/watchlist" element={
+          <RequireAuth>
+            <MyWatchlists />
+          </RequireAuth>
+        } />
+        
+        <Route path="/groups" element={
+          <RequireAuth>
+            <Groups />
+          </RequireAuth>
+        } />
+        
+        <Route path="/join-group" element={
+          <RequireAuth>
+            <JoinGroupForm />
+          </RequireAuth>
+        } />
+        
+        {/* Protected Routes - Group Creation (Login Required) */}
+        <Route path="/create-group" element={
+          <RequireGroupCreation>
+            <CreateGroupForm />
+          </RequireGroupCreation>
+        } />
+        
+        {/* Protected Routes - Group Membership Required */}
+        <Route path="/group/:groupId" element={
+          <RequireAuth>
+            <RequireGroupMembership>
+              <GroupDetails />
+            </RequireGroupMembership>
+          </RequireAuth>
+        } />
+        
+        <Route path="/discussion/:groupId" element={
+          <RequireAuth>
+            <RequireGroupMembership>
+              <DiscussionPage />
+            </RequireGroupMembership>
+          </RequireAuth>
+        } />
+        
+        <Route path="/group/:groupId/recommend" element={
+          <RequireAuth>
+            <RequireGroupMembership>
+              <RecommendedMovies />
+            </RequireGroupMembership>
+          </RequireAuth>
+        } />
+        
+        {/* Protected Routes - Event Access (Group Membership Required) */}
+        <Route path="/events/:eventId" element={
+          <RequireAuth>
+            <RequireEventAccess>
+              <Event />
+            </RequireEventAccess>
+          </RequireAuth>
+        } />
+        
+        <Route path="/events/create/:groupId" element={
+          <RequireAuth>
+            <RequireGroupMembership>
+              <EventRegistration />
+            </RequireGroupMembership>
+          </RequireAuth>
+        } />
       </Routes>
     </div>
   );

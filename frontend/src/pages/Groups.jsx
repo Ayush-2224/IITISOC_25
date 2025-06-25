@@ -2,13 +2,24 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FaTrash, FaUsers, FaCrown, FaPlus, FaEye } from "react-icons/fa";
+import { FaTrash, FaUsers, FaCrown, FaPlus, FaEye, FaEdit, FaCalendar, FaClock, FaBell, FaSave, FaTimes, FaSignOutAlt } from "react-icons/fa";
 
 const Groups = () => {
   const userId = localStorage.getItem("userId");
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem("token");
+  const [token] = useState(localStorage.getItem("token"));
+  
+  // Event editing state
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    dateTime: "",
+    notes: "",
+    sendReminder: false,
+    reminderTime: "",
+  });
 
   const navigate = useNavigate();
 
@@ -52,7 +63,6 @@ const Groups = () => {
     }
 
     try {
-      const token = localStorage.getItem("token");
       await axios.delete(`http://localhost:4000/api/group/delete/${groupId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -62,6 +72,99 @@ const Groups = () => {
       fetchGroups();
     } catch (err) {
       toast.error("Error deleting group");
+    }
+  };
+
+  // handler for leaving the group
+  const handleLeave = async (groupId) => {
+    if (!window.confirm("Are you sure you want to leave this group?")) {
+      return;
+    }
+
+    try {
+      await axios.post(`http://localhost:4000/api/group/leave/${groupId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Successfully left the group");
+      fetchGroups();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error leaving group");
+    }
+  };
+
+  // Event editing functions
+  const openEditModal = (event) => {
+    setEditingEvent(event);
+    setEditFormData({
+      title: event.title,
+      dateTime: event.dateTime.slice(0, 16),
+      notes: event.notes || "",
+      sendReminder: event.reminder?.sendReminder || false,
+      reminderTime: event.reminder?.reminderTime
+        ? event.reminder.reminderTime.slice(0, 16)
+        : "",
+    });
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingEvent(null);
+    setEditFormData({
+      title: "",
+      dateTime: "",
+      notes: "",
+      sendReminder: false,
+      reminderTime: "",
+    });
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleUpdateEvent = async (e) => {
+    e.preventDefault();
+    
+    if (!editingEvent) return;
+
+    try {
+      const updatedEvent = {
+        title: editFormData.title.trim(),
+        dateTime: new Date(editFormData.dateTime).toISOString(),
+        notes: editFormData.notes.trim(),
+        reminder: {
+          sendReminder: editFormData.sendReminder,
+          reminderTime: editFormData.sendReminder
+            ? new Date(editFormData.reminderTime).toISOString()
+            : null,
+        },
+      };
+
+      await axios.put(
+        `http://localhost:4000/api/events/update/${editingEvent._id}`,
+        updatedEvent,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Event updated successfully!");
+      closeEditModal();
+      
+      // Refresh groups to show updated event data
+      fetchGroups();
+    } catch (err) {
+      console.error("Error updating event:", err);
+      toast.error(err.response?.data?.message || "Failed to update event");
     }
   };
 
@@ -154,18 +257,34 @@ const Groups = () => {
                       )}
                     </div>
 
-                    {/* Delete Button */}
-                    {group.createdBy === userId && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(group._id);
-                        }}
-                        className="p-2 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 hover:border-red-500/50 rounded-full text-red-400 hover:text-red-300 transition-all duration-300 hover:scale-110"
-                      >
-                        <FaTrash className="w-4 h-4" />
-                      </button>
-                    )}
+                    {/* Delete/Leave Button */}
+                    <div className="flex items-center space-x-2">
+                      {group.createdBy === userId ? (
+                        // Creator can delete the group
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(group._id);
+                          }}
+                          className="p-2 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 hover:border-red-500/50 rounded-full text-red-400 hover:text-red-300 transition-all duration-300 hover:scale-110"
+                          title="Delete Group"
+                        >
+                          <FaTrash className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        // Members can leave the group
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLeave(group._id);
+                          }}
+                          className="p-2 bg-orange-500/20 hover:bg-orange-500/40 border border-orange-500/30 hover:border-orange-500/50 rounded-full text-orange-400 hover:text-orange-300 transition-all duration-300 hover:scale-110"
+                          title="Leave Group"
+                        >
+                          <FaSignOutAlt className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -248,6 +367,123 @@ const Groups = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Event Modal */}
+      {showEditModal && editingEvent && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-white/20 rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+                <FaEdit className="w-6 h-6 text-purple-400" />
+                <span>Edit Event</span>
+              </h2>
+              <button
+                onClick={closeEditModal}
+                className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
+              >
+                <FaTimes className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateEvent} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center space-x-2">
+                  <FaCalendar className="w-4 h-4 text-purple-400" />
+                  <span>Event Title</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={editFormData.title}
+                  onChange={handleEditFormChange}
+                  required
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                  placeholder="Enter event title"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center space-x-2">
+                  <FaClock className="w-4 h-4 text-blue-400" />
+                  <span>Date & Time</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  name="dateTime"
+                  value={editFormData.dateTime}
+                  onChange={handleEditFormChange}
+                  required
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  📝 Event Notes (Optional)
+                </label>
+                <textarea
+                  name="notes"
+                  value={editFormData.notes}
+                  onChange={handleEditFormChange}
+                  rows="4"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 resize-none"
+                  placeholder="Add any special instructions, themes, or details about your event..."
+                />
+              </div>
+
+              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                <div className="flex items-center space-x-3 mb-4">
+                  <input
+                    type="checkbox"
+                    name="sendReminder"
+                    id="sendReminder"
+                    checked={editFormData.sendReminder}
+                    onChange={handleEditFormChange}
+                    className="w-4 h-4 text-purple-600 bg-white/10 border-white/20 rounded focus:ring-purple-500 focus:ring-2"
+                  />
+                  <label htmlFor="sendReminder" className="text-gray-300 flex items-center space-x-2">
+                    <FaBell className="w-4 h-4 text-orange-400" />
+                    <span>Send reminder notification</span>
+                  </label>
+                </div>
+
+                {editFormData.sendReminder && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Reminder Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="reminderTime"
+                      value={editFormData.reminderTime}
+                      onChange={handleEditFormChange}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 flex items-center justify-center space-x-2"
+                >
+                  <FaSave className="w-4 h-4" />
+                  <span>Save Changes</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-red-500/25 flex items-center justify-center space-x-2"
+                >
+                  <FaTimes className="w-4 h-4" />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

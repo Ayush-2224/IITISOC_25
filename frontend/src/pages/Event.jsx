@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FaCalendar, FaClock, FaEdit, FaUser, FaUsers, FaFilm, FaBell, FaSave, FaTimes, FaStar } from "react-icons/fa";
+import { FaCalendar, FaClock, FaEdit, FaUser, FaUsers, FaFilm, FaBell, FaSave, FaTimes, FaStar, FaSearch, FaPlus, FaTrash } from "react-icons/fa";
+import debounce from "lodash.debounce";
 
+const API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62";
 
 const Event = () => {
   const { eventId } = useParams();
+  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,6 +22,16 @@ const Event = () => {
     reminderTime: "",
   });
   const [allowedToEdit, setAllowedToEdit] = useState(false);
+  
+  // New state for movie search functionality
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  
+  // State for movie details
+  const [movieDetails, setMovieDetails] = useState([]);
+  const [loadingMovies, setLoadingMovies] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -44,6 +57,11 @@ const Event = () => {
             ? response.data.event.reminder.reminderTime.slice(0, 16)
             : "",
         });
+        
+        // Fetch movie details if there are suggested movies
+        if (response.data.event.suggestedMovies && response.data.event.suggestedMovies.length > 0) {
+          fetchMovieDetails(response.data.event.suggestedMovies);
+        }
       } catch (err) {
         setError("Failed to fetch event details");
         toast.error(
@@ -55,6 +73,40 @@ const Event = () => {
     };
     fetchEvent();
   }, [eventId]);
+
+  // Function to fetch movie details from TMDB API
+  const fetchMovieDetails = async (movieIds) => {
+    setLoadingMovies(true);
+    try {
+      const moviePromises = movieIds.map(async (movieId) => {
+        try {
+          const response = await axios.get(
+            `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}`
+          );
+          return {
+            ...response.data,
+            movieId: movieId // Keep the original movie ID for removal
+          };
+        } catch (err) {
+          console.error(`Error fetching movie ${movieId}:`, err);
+          return null;
+        }
+      });
+
+      const movies = await Promise.all(moviePromises);
+      const validMovies = movies.filter(movie => movie !== null);
+      setMovieDetails(validMovies);
+    } catch (err) {
+      console.error("Error fetching movie details:", err);
+    } finally {
+      setLoadingMovies(false);
+    }
+  };
+
+  // Function to navigate to movie details page
+  const navigateToMovieDetails = (movieId) => {
+    navigate(`/movie/${movieId}`);
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -94,6 +146,109 @@ const Event = () => {
       setEvent((prev) => ({ ...prev, ...updatedEvent }));
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update event");
+    }
+  };
+
+  // Search movies function
+  const searchMovies = debounce(async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const res = await axios.get(
+        `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${query}`
+      );
+      setSearchResults(res.data.results.slice(0, 5));
+    } catch (err) {
+      console.error("Error searching movies:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  }, 500);
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    searchMovies(query);
+  };
+
+  const addMovieToEvent = async (movieId, movieData) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:4000/api/events/addMovie",
+        {
+          movieId: parseInt(movieId),
+          eventId: eventId
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      toast.success("Movie added to event successfully!");
+      
+      // Refresh event data to show updated movie list
+      const eventResponse = await axios.get(
+        `http://localhost:4000/api/events/get/${eventId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setEvent(eventResponse.data.event);
+      
+      // Fetch updated movie details
+      if (eventResponse.data.event.suggestedMovies && eventResponse.data.event.suggestedMovies.length > 0) {
+        fetchMovieDetails(eventResponse.data.event.suggestedMovies);
+      }
+      
+      // Clear search
+      setSearchQuery("");
+      setSearchResults([]);
+    } catch (err) {
+      console.error("Error adding movie to event:", err);
+      toast.error("Failed to add movie to event");
+    }
+  };
+
+  const removeMovieFromEvent = async (movieId) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:4000/api/events/removeMovie",
+        {
+          movieId: movieId,
+          eventId: eventId
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      toast.success("Movie removed from event successfully!");
+      
+      // Refresh event data to show updated movie list
+      const eventResponse = await axios.get(
+        `http://localhost:4000/api/events/get/${eventId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setEvent(eventResponse.data.event);
+      
+      // Fetch updated movie details
+      if (eventResponse.data.event.suggestedMovies && eventResponse.data.event.suggestedMovies.length > 0) {
+        fetchMovieDetails(eventResponse.data.event.suggestedMovies);
+      } else {
+        setMovieDetails([]);
+      }
+    } catch (err) {
+      console.error("Error removing movie from event:", err);
+      toast.error("Failed to remove movie from event");
     }
   };
 
@@ -238,37 +393,138 @@ const Event = () => {
 
             {/* Suggested Movies */}
             <div className="bg-white/5 backdrop-blur-sm border border-white/20 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-white mb-6 flex items-center space-x-3">
-                <FaFilm className="w-6 h-6 text-red-400" />
-                <span>Suggested Movies ({event.suggestedMovies.length})</span>
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-white flex items-center space-x-3">
+                  <FaFilm className="w-6 h-6 text-red-400" />
+                  <span>Suggested Movies ({event.suggestedMovies.length})</span>
+                </h3>
+                
+                {/* Add Movie Button */}
+                <button
+                  onClick={() => setShowSearch(!showSearch)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-2"
+                >
+                  <FaPlus className="w-4 h-4" />
+                  <span>Add Movie</span>
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              {showSearch && (
+                <div className="mb-6">
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                      {isSearching ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
+                      ) : (
+                        <FaSearch className="w-4 h-4" />
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      placeholder="Search movies to add to this event..."
+                      className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+                  
+                  {/* Search Results */}
+                  {searchResults.length > 0 && (
+                    <div className="mt-2 bg-black/40 border border-white/20 rounded-xl overflow-hidden">
+                      {searchResults.map((movie) => (
+                        <div key={movie.id} className="flex items-center gap-3 p-3 hover:bg-white/10 transition-all duration-200">
+                          <img
+                            src={
+                              movie.poster_path
+                                ? `https://image.tmdb.org/t/p/w92${movie.poster_path}`
+                                : "https://via.placeholder.com/50x75?text=🎬&bg=1a1a1a&color=666666"
+                            }
+                            alt={movie.title}
+                            className="w-12 h-16 object-cover rounded-lg border border-white/20"
+                            onError={(e) => {
+                              e.target.src = "https://via.placeholder.com/50x75?text=🎬&bg=1a1a1a&color=666666";
+                            }}
+                          />
+                          <div className="flex-1">
+                            <h4 className="text-white font-medium text-sm">{movie.title}</h4>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className="text-gray-400 text-xs">{movie.release_date?.split('-')[0] || "TBA"}</span>
+                              {movie.vote_average > 0 && (
+                                <div className="flex items-center space-x-1">
+                                  <FaStar className="w-3 h-3 text-yellow-400" />
+                                  <span className="text-yellow-300 text-xs">{movie.vote_average.toFixed(1)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => addMovieToEvent(movie.id, movie)}
+                            className="px-3 py-1 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-xs hover:bg-green-500/30 transition-all duration-300"
+                          >
+                            Add
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               
-              {event.suggestedMovies.length > 0 ? (
+              {/* Movie Details Display */}
+              {loadingMovies ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading movie details...</p>
+                </div>
+              ) : movieDetails.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {event.suggestedMovies.map((m, i) => (
-                    <div key={m._id || i} className="group bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 overflow-hidden">
+                  {movieDetails.map((movie) => (
+                    <div key={movie.movieId} className="group bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 overflow-hidden relative cursor-pointer">
                       <img
-                        src={m.posterUrl || "https://via.placeholder.com/300x400?text=🎬&bg=1a1a1a&color=666666"}
-                        alt={m.title || "No Title"}
+                        src={
+                          movie.poster_path
+                            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                            : "https://via.placeholder.com/300x400?text=🎬&bg=1a1a1a&color=666666"
+                        }
+                        alt={movie.title}
                         className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                         onError={(e) => {
                           e.target.src = "https://via.placeholder.com/300x400?text=🎬&bg=1a1a1a&color=666666";
                         }}
+                        onClick={() => navigateToMovieDetails(movie.movieId)}
                       />
-                      <div className="p-4">
+                      
+                      {/* Remove Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeMovieFromEvent(movie.movieId);
+                        }}
+                        className="absolute top-2 right-2 p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-10"
+                      >
+                        <FaTrash className="w-3 h-3" />
+                      </button>
+                      
+                      <div className="p-4" onClick={() => navigateToMovieDetails(movie.movieId)}>
                         <h4 className="font-bold text-white text-sm mb-2 line-clamp-2">
-                          {m.title || "Untitled"} {m.year ? `(${m.year})` : ""}
+                          {movie.title} {movie.release_date ? `(${movie.release_date.split('-')[0]})` : ""}
                         </h4>
                         <div className="flex items-center space-x-2 mb-2">
                           <FaStar className="w-3 h-3 text-yellow-400" />
-                          <span className="text-yellow-300 text-sm">{m.rating || "N/A"}</span>
+                          <span className="text-yellow-300 text-sm">{movie.vote_average?.toFixed(1) || "N/A"}</span>
                         </div>
                         <p className="text-xs text-gray-400 line-clamp-2">
-                          {Array.isArray(m.genres) ? m.genres.join(", ") : "No genres"}
+                          {movie.genres ? movie.genres.map(genre => genre.name).join(", ") : "No genres"}
                         </p>
                       </div>
                     </div>
                   ))}
+                </div>
+              ) : event.suggestedMovies.length > 0 ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading movie details...</p>
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -276,7 +532,7 @@ const Event = () => {
                     <FaFilm className="w-12 h-12 text-gray-500" />
                   </div>
                   <h4 className="text-xl font-bold text-gray-300 mb-2">No movies suggested yet</h4>
-                  <p className="text-gray-500">Participants can suggest movies for this event</p>
+                  <p className="text-gray-500">Click "Add Movie" to suggest movies for this event</p>
                 </div>
               )}
             </div>

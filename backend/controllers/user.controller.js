@@ -179,4 +179,30 @@ const logout = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
-export { loginUser, registerUser, googleAuth, googleCallBack,forgotPassword,resetPassword,logout };
+
+// Get user profile for authentication verification
+const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await userModel.findById(userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        profilePic: user.profilePic
+      }
+    });
+  } catch (error) {
+    console.error('getUserProfile error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export { loginUser, registerUser, googleAuth, googleCallBack, forgotPassword, resetPassword, logout, getUserProfile };

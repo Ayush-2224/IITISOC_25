@@ -13,7 +13,7 @@ const Signup = () => {
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [avatarBox, setAvatarBox] = useState(false);
   const [avatar, setAvatar] = useState(Avatar[0]);
-  const { backendUrl, token, settoken } = useContext(Context)
+  const { backendUrl, token, login } = useContext(Context)
 
   const handleGoogleLogin = () => {
     window.location.href = `http://localhost:4000/api/user/auth/google`;
@@ -34,18 +34,44 @@ const Signup = () => {
 
   const navigate = useNavigate();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (token) {
+      navigate("/");
+    }
+  }, [token, navigate]);
+
   // handling the signup
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(backendUrl + "/api/user/register", { name, email, password, profilePic: avatar || Avatar[avatarIndex] });
+      const response = await axios.post(backendUrl + "/api/user/register", { 
+        name, 
+        email, 
+        password, 
+        profilePic: avatar || Avatar[avatarIndex] 
+      });
+      
       if (response.data.success) {
-        toast.success("User Registered Successfully")
+        toast.success("User Registered Successfully");
+        
+        // Automatically log in the user after successful registration
+        if (response.data.token) {
+          // Get user profile to get complete user data
+          const userResponse = await axios.get('http://localhost:4000/api/user/profile', {
+            headers: {
+              Authorization: `Bearer ${response.data.token}`,
+            },
+          });
+          
+          login(response.data.token, userResponse.data.user);
+          navigate("/");
+        }
       } else {
         toast.error(response.data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 

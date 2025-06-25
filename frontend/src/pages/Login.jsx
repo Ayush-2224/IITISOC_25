@@ -8,44 +8,46 @@ import { useNavigate } from "react-router-dom";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-   const {backendUrl,token,settoken}=useContext(Context)
-   const navigate=useNavigate()
-   const handleGoogleLogin = () => {
+  const { backendUrl, token, login } = useContext(Context);
+  const navigate = useNavigate();
+  
+  const handleGoogleLogin = () => {
     window.location.href = `http://localhost:4000/api/user/auth/google`;
   };
+  
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
       const response = await axios.post(backendUrl + "/api/user/login", {
-          email,
-          password,
+        email,
+        password,
+      });
+      
+      if (response.data.success) {
+        // Get user profile to get complete user data
+        const userResponse = await axios.get('http://localhost:4000/api/user/profile', {
+          headers: {
+            Authorization: `Bearer ${response.data.token}`,
+          },
         });
-        // console.log(response)
-        if (response.data.success) {
-          settoken(response.data.token);
-          localStorage.setItem("token", response.data.token);
-          localStorage.setItem("userId", response.data.userId);
-          toast.success("You have logged in succesfully")
-        } else {
-          // console.log(response.data.message);
-          toast.error(response.data.message);
-        }
+        
+        login(response.data.token, userResponse.data.user);
+        toast.success("You have logged in successfully");
+        navigate("/");
+      } else {
+        toast.error(response.data.message);
+      }
     } catch (error) {
-        // console.log(response.data.message);
-         toast.error(error.message);
-    } 
+      toast.error(error.response?.data?.message || error.message);
     }
-  
+  };
 
-
-   useEffect(() => {
+  useEffect(() => {
     if (token) {
       navigate("/");
     }
-  }, [token]);
-
-  
+  }, [token, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 flex items-center justify-center p-4 relative overflow-hidden">

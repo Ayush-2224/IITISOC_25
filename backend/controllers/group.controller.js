@@ -91,6 +91,43 @@ export const deleteGroup = async (req, res) => {
   }
 };
 
+// leave group
+export const leaveGroup = async (req, res) => {
+  const { groupId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if user is the creator
+    if (group.createdBy.toString() === userId) {
+      return res.status(403).json({ 
+        message: "Group creator cannot leave the group. Please delete the group instead." 
+      });
+    }
+
+    // Check if user is a member
+    if (!group.members.includes(userId)) {
+      return res.status(400).json({ message: "You are not a member of this group" });
+    }
+
+    // Remove user from members array
+    group.members = group.members.filter(memberId => memberId.toString() !== userId);
+    await group.save();
+
+    res.status(200).json({ 
+      message: "Successfully left the group",
+      group 
+    });
+  } catch (err) {
+    console.error('Leave group error:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const recommendMovie = async (req, res) => {
   try {
     const { groupId } = req.params;

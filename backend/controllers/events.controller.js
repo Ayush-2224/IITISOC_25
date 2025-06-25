@@ -119,9 +119,42 @@ const getEventsbyGroup = async (req, res, next) => {
     }
 }
 
+const getPastEventsbyGroup = async (req, res, next) => {
+    const userId = req.user.id;
+    const GroupId = req.params.groupId;
+    try {
+        const group = await Group.findOne({ _id: GroupId, members: userId }); 
+        if (!group) {
+            return next(new HttpError("Group not found or you are not a member of this group", 404));
+        }
+        
+        const now = new Date();
+        const pastEvents = await Event.find({ 
+            Group: GroupId,
+            dateTime: { $lt: now }
+        }).sort({ dateTime: -1 }); // Sort by most recent first
+        
+        const eventsWithParticipantStatus = pastEvents.map(event => {
+            return {
+                ...event.toObject(),
+                isParticipant: event.participants.includes(userId),
+                isAdmin: event.createdBy.toString() === userId.toString()
+            };
+        });
+        
+        res.status(200).json({
+            message: "Past events fetched successfully",
+            events: eventsWithParticipantStatus
+        })
+    } catch (error) {
+        console.log(error);
+        return next(new HttpError(error.message, 400));
+    }
+}
+
 const updateEvent = async (req, res, next) => {
     const { eventId } = req.params;
-    const { title, dateTime, notes, reminderTime } = req.body;
+    const { title, dateTime, notes, reminder } = req.body;
     const userId = req.user.id;
     try {
         const event = await Event.findById(eventId);
@@ -135,19 +168,27 @@ const updateEvent = async (req, res, next) => {
         if (event.dateTime < new Date()) {
             return next(new HttpError("You cannot update an event that has already passed", 400));
         }
+        
         if (title) {
             event.title = title;
         }
         if (dateTime) {
             event.dateTime = dateTime;
         }
-        if (notes) {
+        if (notes !== undefined) {
             event.notes = notes;
         }
-        if (reminderTime) {
-            event.reminder.sendReminder = true;
-            event.reminder.reminderTime = new Date(reminderTime);
+        
+        // Handle reminder data from nested object
+        if (reminder) {
+            event.reminder = {
+                sendReminder: reminder.sendReminder || false,
+                reminderTime: reminder.sendReminder && reminder.reminderTime 
+                    ? new Date(reminder.reminderTime) 
+                    : null,
+            };
         }
+        
         await event.save();
         res.status(200).json({
             message: "Event updated successfully",
@@ -192,6 +233,12 @@ const joinEvent = async (req, res, next) => {
         if (!event) {
             return next(new HttpError("Event not found", 404));
         }
+        
+        // Check if event has already passed
+        if (event.dateTime < new Date()) {
+            return next(new HttpError("Cannot join an event that has already passed", 400));
+        }
+        
         const groupId = event.Group;
         const group = groupId ? await Group.findById(groupId) : null;
 
@@ -225,6 +272,12 @@ const leaveEvent = async (req, res, next) => {
         if (!event) {
             return next(new HttpError("Event not found", 404));
         }
+        
+        // Check if event has already passed
+        if (event.dateTime < new Date()) {
+            return next(new HttpError("Cannot leave an event that has already passed", 400));
+        }
+        
         if (!event.participants || !event.participants.some(p => p.toString() === userId.toString())) {
             return next(new HttpError("You are not a participant of this event", 400));
         }
@@ -241,76 +294,80 @@ const leaveEvent = async (req, res, next) => {
     }
 }
 const addMovieTOEvent = async (req, res, next) => {
-  try {
-    const { movieId, eventId } = req.body;
-    // console.log("movieId:", movieId);
-    // console.log("eventId:", eventId);
-
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).json({ success: false, message: "Event not found" });
-    }
-
-    if (!event.suggestedMovies.includes(movieId)) {
-      event.suggestedMovies.push(movieId);
-    }
-    if (event.Group) {
-        console.log("Group event detected");
-      await History.create({
-        group: event.Group,
-        event: event._id,
-        watchedMovie: movieId,
-        watchedOn: new Date()
+    try {
+      const { movieId, eventId } = req.body;
+  
+      const event = await Event.findById(eventId);
+      if (!event) {
+        return res.status(404).json({ success: false, message: "Event not found" });
+      }
+  
+      if (!event.suggestedMovies.includes(movieId)) {
+        event.suggestedMovies.push(movieId);
+      }
+  
+      if (event.Group) {
+        await History.create({
+          group: event.Group,
+          event: event._id,
+          watchedMovie: movieId,
+          watchedOn: new Date()
+        });
+      }
+  
+      await event.save();
+  
+      return res.status(200).json({
+        success: true,
+        message: "Movie added to event successfully",
+        event,
       });
+  
+    } catch (error) {
+      console.error("Error adding movie to event:", error);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-
-    await event.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Movie added to event successfully",
-      event,
-    });
-
-  } catch (error) {
-    console.error("Error adding movie to event:", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
-
+  };
+  
+  
 const removeMovieFromEvent = async (req, res, next) => {
-  try {
-    const { movieId, eventId } = req.body;
-
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).json({ success: false, message: "Event not found" });
+    console.log(req.body)
+    console.log("called")
+    try {
+      const { movieId, eventId } = req.body;
+  
+      const event = await Event.findById(eventId);
+      if (!event) {
+        return res.status(404).json({ success: false, message: "Event not found" });
+      }
+  
+      if (!event.suggestedMovies.includes(movieId)) {
+        return res.status(400).json({ success: false, message: "Movie not found in event" });
+      }
+  
+      event.suggestedMovies = event.suggestedMovies.filter(id => id !== movieId);
+      await event.save();
+  
+      return res.status(200).json({
+        success: true,
+        message: "Movie removed from event successfully",
+        event,
+      });
+  
+    } catch (error) {
+      console.error("Error removing movie from event:", error);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-
-    if (!event.suggestedMovies.includes(movieId)) {
-      return res.status(400).json({ success: false, message: "Movie not found in event" });
-    }
-
-    event.suggestedMovies = event.suggestedMovies.filter(id => id !== movieId);
-    await event.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Movie removed from event successfully",
-      event,
-    });
-
-  } catch (error) {
-    console.error("Error removing movie from event:", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
+  };
+  
+  
 
 export {
     createEvent,
     getEvent,
     getEventsbyUser,
     getEventsbyGroup,
+    getPastEventsbyGroup,
     updateEvent,
     deleteEvent,
     joinEvent,

@@ -8,15 +8,12 @@ import { toast } from "react-toastify";
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownOpen1, setDropdownOpen1] = useState(false);
-  const { token, settoken } = useContext(Context);
+  const { token, logout } = useContext(Context);
   const navigate = useNavigate();
 
   const handlelogout = () => {
     navigate("/");
-    localStorage.removeItem("token");
-    settoken("");
-    localStorage.removeItem("userId");
-    toast.success("You have logged out successfully");
+    logout();
     setDropdownOpen(!dropdownOpen);
   };
 
