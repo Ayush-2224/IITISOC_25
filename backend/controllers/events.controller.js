@@ -179,12 +179,12 @@ const updateEvent = async (req, res, next) => {
             event.notes = notes;
         }
         
-        // Handle reminder data from nested object
-        if (reminder) {
+        // Always update reminder object
+        if (reminder !== undefined) {
             event.reminder = {
-                sendReminder: reminder.sendReminder || false,
-                reminderTime: reminder.sendReminder && reminder.reminderTime 
-                    ? new Date(reminder.reminderTime) 
+                sendReminder: !!reminder.sendReminder,
+                reminderTime: reminder.sendReminder && reminder.reminderTime
+                    ? new Date(reminder.reminderTime)
                     : null,
             };
         }
@@ -296,10 +296,19 @@ const leaveEvent = async (req, res, next) => {
 const addMovieTOEvent = async (req, res, next) => {
     try {
       const { movieId, eventId } = req.body;
+      const userId = req.user.id;
   
       const event = await Event.findById(eventId);
       if (!event) {
         return res.status(404).json({ success: false, message: "Event not found" });
+      }
+  
+      // Check if user is a participant of this event
+      if (!event.participants || !event.participants.some(p => p.toString() === userId.toString())) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Only event participants can add movies to this event" 
+        });
       }
   
       if (!event.suggestedMovies.includes(movieId)) {
@@ -335,10 +344,19 @@ const removeMovieFromEvent = async (req, res, next) => {
     console.log("called")
     try {
       const { movieId, eventId } = req.body;
+      const userId = req.user.id;
   
       const event = await Event.findById(eventId);
       if (!event) {
         return res.status(404).json({ success: false, message: "Event not found" });
+      }
+  
+      // Check if user is a participant of this event
+      if (!event.participants || !event.participants.some(p => p.toString() === userId.toString())) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "Only event participants can remove movies from this event" 
+        });
       }
   
       if (!event.suggestedMovies.includes(movieId)) {

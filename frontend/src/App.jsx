@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
@@ -31,6 +31,7 @@ import {
 } from "./components/ProtectedRoute";
 
 const App = () => {
+  const location = useLocation();
   // Test backend connection on app load
   useEffect(() => {
     const testBackend = async () => {
@@ -48,7 +49,8 @@ const App = () => {
     <div>
       <ToastContainer position="bottom-right" />
       <Navbar />
-      <SearchBarWithSuggestions />
+      {/* Only show search bar if not on a discussion page */}
+      {!(location.pathname.startsWith("/discussion/")) && <SearchBarWithSuggestions />}
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
@@ -59,6 +61,7 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/movie/:id" element={<MediaDetails />} />
         <Route path="/:mediaType/:id" element={<MediaDetails />} />
         
         {/* Protected Routes - Login Required */}

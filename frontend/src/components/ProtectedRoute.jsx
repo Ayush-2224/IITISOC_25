@@ -6,15 +6,23 @@ import { Context } from '../context/Context';
 
 // Protected Route for Login Required
 export const RequireAuth = ({ children }) => {
-  const { token } = useContext(Context);
+  const { token, loading: contextLoading } = useContext(Context);
   const [isValidToken, setIsValidToken] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('RequireAuth: Token from context:', token);
+    console.log('RequireAuth: Context loading:', contextLoading, 'Token from context:', token);
     
     const verifyToken = async () => {
-      if (!token) {
+      // Wait for context to finish loading
+      if (contextLoading) {
+        return;
+      }
+
+      // Check both context token and localStorage as fallback
+      const currentToken = token || localStorage.getItem("token");
+      
+      if (!currentToken) {
         console.log('RequireAuth: No token found');
         setIsValidToken(false);
         setLoading(false);
@@ -25,7 +33,7 @@ export const RequireAuth = ({ children }) => {
         console.log('RequireAuth: Verifying token with backend...');
         await axios.get('http://localhost:4000/api/user/profile', {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${currentToken}`,
           },
         });
         console.log('RequireAuth: Token verified successfully');
@@ -42,11 +50,12 @@ export const RequireAuth = ({ children }) => {
     };
 
     verifyToken();
-  }, [token]);
+  }, [token, contextLoading]);
 
-  console.log('RequireAuth: Loading:', loading, 'isValidToken:', isValidToken);
+  console.log('RequireAuth: Loading:', loading, 'isValidToken:', isValidToken, 'Context loading:', contextLoading);
 
-  if (loading) {
+  // Show loading while context is still loading
+  if (contextLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
@@ -69,12 +78,19 @@ export const RequireAuth = ({ children }) => {
 // Protected Route for Group Membership
 export const RequireGroupMembership = ({ children }) => {
   const { groupId } = useParams();
-  const { token } = useContext(Context);
+  const { token, loading: contextLoading } = useContext(Context);
   const [isMember, setIsMember] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
+    // Wait for context to finish loading
+    if (contextLoading) {
+      return;
+    }
+
+    const currentToken = token || localStorage.getItem("token");
+    
+    if (!currentToken) {
       setLoading(false);
       return;
     }
@@ -83,7 +99,7 @@ export const RequireGroupMembership = ({ children }) => {
       try {
         await axios.get(`http://localhost:4000/api/group/${groupId}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${currentToken}`,
           },
         });
         setIsMember(true);
@@ -99,9 +115,9 @@ export const RequireGroupMembership = ({ children }) => {
     if (groupId) {
       checkGroupMembership();
     }
-  }, [groupId, token]);
+  }, [groupId, token, contextLoading]);
 
-  if (loading) {
+  if (contextLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
@@ -122,12 +138,19 @@ export const RequireGroupMembership = ({ children }) => {
 // Protected Route for Event Access (requires group membership)
 export const RequireEventAccess = ({ children }) => {
   const { eventId } = useParams();
-  const { token } = useContext(Context);
+  const { token, loading: contextLoading } = useContext(Context);
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
+    // Wait for context to finish loading
+    if (contextLoading) {
+      return;
+    }
+
+    const currentToken = token || localStorage.getItem("token");
+    
+    if (!currentToken) {
       setLoading(false);
       return;
     }
@@ -136,7 +159,7 @@ export const RequireEventAccess = ({ children }) => {
       try {
         const response = await axios.get(`http://localhost:4000/api/events/get/${eventId}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${currentToken}`,
           },
         });
         
@@ -154,9 +177,9 @@ export const RequireEventAccess = ({ children }) => {
     if (eventId) {
       checkEventAccess();
     }
-  }, [eventId, token]);
+  }, [eventId, token, contextLoading]);
 
-  if (loading) {
+  if (contextLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
@@ -176,13 +199,20 @@ export const RequireEventAccess = ({ children }) => {
 
 // Protected Route for Group Creation (requires login)
 export const RequireGroupCreation = ({ children }) => {
-  const { token } = useContext(Context);
+  const { token, loading: contextLoading } = useContext(Context);
   const [isValidToken, setIsValidToken] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for context to finish loading
+    if (contextLoading) {
+      return;
+    }
+
+    const currentToken = token || localStorage.getItem("token");
+
     const verifyToken = async () => {
-      if (!token) {
+      if (!currentToken) {
         setIsValidToken(false);
         setLoading(false);
         return;
@@ -191,7 +221,7 @@ export const RequireGroupCreation = ({ children }) => {
       try {
         await axios.get('http://localhost:4000/api/user/profile', {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${currentToken}`,
           },
         });
         setIsValidToken(true);
@@ -207,9 +237,9 @@ export const RequireGroupCreation = ({ children }) => {
     };
 
     verifyToken();
-  }, [token]);
+  }, [token, contextLoading]);
 
-  if (loading) {
+  if (contextLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">

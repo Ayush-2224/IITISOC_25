@@ -95,6 +95,7 @@ export const deleteGroup = async (req, res) => {
 export const leaveGroup = async (req, res) => {
   const { groupId } = req.params;
   const userId = req.user.id;
+  const { memberId } = req.body; // Optional: member to remove
 
   try {
     const group = await Group.findById(groupId);
@@ -102,7 +103,24 @@ export const leaveGroup = async (req, res) => {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    // Check if user is the creator
+    // If the requester is the creator and a memberId is provided, allow removing that member
+    if (group.createdBy.toString() === userId && memberId) {
+      // Prevent creator from removing themselves via this method
+      if (memberId === userId) {
+        return res.status(403).json({ 
+          message: "Group creator cannot remove themselves. Please delete the group instead." 
+        });
+      }
+      // Check if memberId is in group
+      if (!group.members.includes(memberId)) {
+        return res.status(400).json({ message: "User is not a member of this group" });
+      }
+      group.members = group.members.filter(mId => mId.toString() !== memberId);
+      await group.save();
+      return res.status(200).json({ message: "Member removed from group", group });
+    }
+
+    // If not creator, only allow user to remove themselves
     if (group.createdBy.toString() === userId) {
       return res.status(403).json({ 
         message: "Group creator cannot leave the group. Please delete the group instead." 

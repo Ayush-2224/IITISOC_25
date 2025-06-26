@@ -428,6 +428,38 @@ const GroupDetails = () => {
                         </p>
                         <p className="text-gray-400 text-sm">{member.email}</p>
                       </div>
+                      {/* Remove button: only show if current user is creator and member is not themselves */}
+                      {group?.createdBy?._id === userId && member._id !== userId && (
+                        <button
+                          className="ml-2 p-2 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 hover:border-red-500/50 rounded-full text-red-400 hover:text-red-300 transition-all duration-300 hover:scale-110"
+                          title="Remove Member"
+                          onClick={async () => {
+                            if (!window.confirm(`Remove ${member.name || member.email}?`)) return;
+                            try {
+                              await axios.post(
+                                `http://localhost:4000/api/group/leave/${groupId}`,
+                                { memberId: member._id },
+                                {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                }
+                              );
+                              toast.success("Member removed from group");
+                              // Refresh group data
+                              const res = await axios.get(
+                                `http://localhost:4000/api/group/${groupId}`,
+                                {
+                                  headers: { Authorization: `Bearer ${token}` },
+                                }
+                              );
+                              setGroup(res.data);
+                            } catch (err) {
+                              toast.error(err.response?.data?.message || "Failed to remove member");
+                            }
+                          }}
+                        >
+                          <FaUserTimes className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

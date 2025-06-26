@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Context } from "../context/Context";
 import { toast } from "react-toastify";
@@ -7,7 +7,12 @@ import { FaStar, FaHeart, FaPlay, FaClock, FaCalendar, FaGlobe, FaDollarSign, Fa
 import ReactPlayer from 'react-player/youtube';
 
 const MediaDetails = () => {
-  const { mediaType, id } = useParams();
+  const { mediaType: paramMediaType, id } = useParams();
+  const location = useLocation();
+  let mediaType = paramMediaType;
+  if (!mediaType && location.pathname.startsWith('/movie/')) {
+    mediaType = 'movie';
+  }
   const navigate = useNavigate();
   const [media, setMedia] = useState(null);
   const [cast, setCast] = useState([]);

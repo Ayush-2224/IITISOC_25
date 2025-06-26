@@ -176,7 +176,7 @@ function DiscussionPage() {
         {/* Scroll to Bottom Button */}
         {showScrollBtn && (
           <button
-            className="fixed bottom-24 right-8 group bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-full shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-110 z-20"
+            className="fixed bottom-24 right-8 group bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-full shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-110 z-30"
             onClick={scrollToBottom}
           >
             <FaArrowDown className="w-5 h-5 group-hover:animate-bounce" />
@@ -184,7 +184,7 @@ function DiscussionPage() {
         )}
 
         {/* Stats Footer */}
-        <div className="backdrop-blur-xl bg-black/10 border-t border-white/5 p-2">
+        <div className="backdrop-blur-xl bg-black/10 border-t border-white/5 p-2 relative z-10">
           <div className="max-w-4xl mx-auto flex justify-center space-x-8 text-sm text-gray-400">
             <div className="flex items-center space-x-2">
               <FaComments className="w-4 h-4 text-blue-400" />

@@ -33,6 +33,12 @@ const Event = () => {
   const [movieDetails, setMovieDetails] = useState([]);
   const [loadingMovies, setLoadingMovies] = useState(false);
 
+  // Get current user ID
+  const currentUserId = localStorage.getItem("userId");
+
+  // Check if current user is a participant of this event
+  const isEventParticipant = event?.participants?.some(p => p._id === currentUserId || p === currentUserId);
+
   useEffect(() => {
     const fetchEvent = async () => {
       setLoading(true);
@@ -400,13 +406,15 @@ const Event = () => {
                 </h3>
                 
                 {/* Add Movie Button */}
-                <button
-                  onClick={() => setShowSearch(!showSearch)}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-2"
-                >
-                  <FaPlus className="w-4 h-4" />
-                  <span>Add Movie</span>
-                </button>
+                {isEventParticipant && (
+                  <button
+                    onClick={() => setShowSearch(!showSearch)}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-2"
+                  >
+                    <FaPlus className="w-4 h-4" />
+                    <span>Add Movie</span>
+                  </button>
+                )}
               </div>
 
               {/* Search Bar */}
@@ -458,12 +466,14 @@ const Event = () => {
                               )}
                             </div>
                           </div>
-                          <button
-                            onClick={() => addMovieToEvent(movie.id, movie)}
-                            className="px-3 py-1 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-xs hover:bg-green-500/30 transition-all duration-300"
-                          >
-                            Add
-                          </button>
+                          {isEventParticipant && (
+                            <button
+                              onClick={() => addMovieToEvent(movie.id, movie)}
+                              className="px-3 py-1 bg-green-500/20 border border-green-500/30 text-green-400 rounded-lg text-xs hover:bg-green-500/30 transition-all duration-300"
+                            >
+                              Add
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -496,15 +506,17 @@ const Event = () => {
                       />
                       
                       {/* Remove Button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeMovieFromEvent(movie.movieId);
-                        }}
-                        className="absolute top-2 right-2 p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-10"
-                      >
-                        <FaTrash className="w-3 h-3" />
-                      </button>
+                      {isEventParticipant && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeMovieFromEvent(movie.movieId);
+                          }}
+                          className="absolute top-2 right-2 p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-10"
+                        >
+                          <FaTrash className="w-3 h-3" />
+                        </button>
+                      )}
                       
                       <div className="p-4" onClick={() => navigateToMovieDetails(movie.movieId)}>
                         <h4 className="font-bold text-white text-sm mb-2 line-clamp-2">
@@ -532,7 +544,12 @@ const Event = () => {
                     <FaFilm className="w-12 h-12 text-gray-500" />
                   </div>
                   <h4 className="text-xl font-bold text-gray-300 mb-2">No movies suggested yet</h4>
-                  <p className="text-gray-500">Click "Add Movie" to suggest movies for this event</p>
+                  <p className="text-gray-500">
+                    {isEventParticipant 
+                      ? "Click 'Add Movie' to suggest movies for this event" 
+                      : "Join this event to suggest movies"
+                    }
+                  </p>
                 </div>
               )}
             </div>
