@@ -16,11 +16,16 @@ Movie Night Planner is a modern web application to organize and coordinate movie
 - Create and join groups
 - Invite members via links
 - Manage group details
+- Recommended movies in your Group Based on the Watch History
+
+✅ **Real time Chat**
+- Make discussion in your groups
 
 ✅ **Events**
 - Schedule movie events
 - Add notes and reminders
 - Edit and delete your events
+- Personalised watchlist for each event
 
 ✅ **Watchlists**
 - Create personal watchlists
@@ -39,7 +44,7 @@ Movie Night Planner is a modern web application to organize and coordinate movie
 
 ## 🎯 AI-Powered Recommendations
 
-This project includes an intelligent movie recommender system that suggests movies tailored to each user’s watch history.
+This project includes an intelligent movie recommender system that suggests movies tailored to each Groups watch history.
 
 ---
 
