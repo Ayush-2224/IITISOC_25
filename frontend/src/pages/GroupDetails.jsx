@@ -412,13 +412,16 @@ const GroupDetails = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <img
-                        src={member.profilePic || "https://via.placeholder.com/40x40?text=👤&bg=1a1a1a&color=666666"}
-                        alt={member.name}
-                        className="w-12 h-12 rounded-full border-2 border-purple-500/30 group-hover:border-purple-500/50 transition-all duration-300"
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/40x40?text=👤&bg=1a1a1a&color=666666";
-                        }}
-                      />
+  src={
+    member.profilePic ||" https://api.dicebear.com/9.x/notionists/svg?seed=Alpha"
+  }
+  alt="User"
+  className="w-12 h-12 rounded-full border-2 border-purple-500/30 group-hover:border-purple-500/50 transition-all duration-300"
+  onError={(e) => {
+    e.target.src = "https://api.dicebear.com/9.x/notionists/svg?seed=Alpha";
+  }}
+/>
+
                       <div className="flex-1">
                         <p className="text-white font-medium flex items-center space-x-2">
                           <span>{member.name || member.email || "Anonymous"}</span>
