@@ -2,7 +2,7 @@
 
 Movie Night Planner is a modern web application to organize and coordinate movie watch parties with your friends. Plan events, manage groups, create watchlists, and enjoy movie nights together!
 
-![Movie Night Planner Screenshot](frontend/src/public/img1screenshot.png) <!-- Add your screenshot image here -->
+![Movie Night Planner Screenshot](frontend/src/public/img1.png) <!-- Add your screenshot image here -->
 
 ---
 
