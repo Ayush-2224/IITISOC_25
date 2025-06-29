@@ -136,13 +136,31 @@ const Navbar = () => {
                         </Link>
                       </>
                     ) : (
-                      <button
-                        onClick={handlelogout}
-                        className="w-full flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-red-500/20 rounded-xl transition-all duration-200"
-                      >
-                        <span className="text-lg">👋</span>
-                        <span>Logout</span>
-                      </button>
+                      <>
+                        <Link
+                          to="/profile"
+                          className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <span className="text-lg">👤</span>
+                          <span>Profile</span>
+                        </Link>
+                        <Link
+                          to="/watchlist"
+                          className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <span className="text-lg">📚</span>
+                          <span>My Watchlist</span>
+                        </Link>
+                        <button
+                          onClick={handlelogout}
+                          className="w-full flex items-center space-x-3 px-4 py-3 text-red-300 hover:text-red-200 hover:bg-red-500/10 rounded-xl transition-all duration-200"
+                        >
+                          <span className="text-lg">🚪</span>
+                          <span>Sign Out</span>
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>

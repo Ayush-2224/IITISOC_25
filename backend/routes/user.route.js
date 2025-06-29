@@ -1,5 +1,5 @@
 import express from "express"
-import {loginUser, registerUser,googleAuth,googleCallBack,forgotPassword,resetPassword,logout,getUserProfile} from "../controllers/user.controller.js"
+import {loginUser, registerUser,googleAuth,googleCallBack,forgotPassword,resetPassword,logout,getUserProfile,updateUserProfile} from "../controllers/user.controller.js"
 import authUser from "../middleware/auth.js"
 import passport from "../config/googleAuth.js"
 const userRouter = express.Router()
@@ -24,4 +24,5 @@ userRouter.get('/auth/google/callback', googleCallBack);
 userRouter.post('/forgot-password', forgotPassword);
 userRouter.post('/reset-password', resetPassword);
 userRouter.get('/profile', authUser, getUserProfile);
+userRouter.put('/profile', authUser, updateUserProfile);
 export default userRouter
