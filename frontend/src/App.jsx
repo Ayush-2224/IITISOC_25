@@ -22,7 +22,6 @@ import Auth from "./components/Auth"; // Google Auth component
 import MyWatchlists from "./pages/Mywatchlist.jsx";
 import RecommendedMovies from "./pages/Reccommend.jsx";
 import UserProfile from "./pages/UserProfile"; // User Profile component
-import EmailVerification from "./pages/EmailVerification"; // Email verification component
 import { useEffect } from "react";
 import axios from "axios";
 import { 
@@ -62,7 +61,6 @@ const App = () => {
         <Route path="/search" element={<SearchResults />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/verify-email/:token" element={<EmailVerification />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/movie/:id" element={<MediaDetails />} />
         <Route path="/:mediaType/:id" element={<MediaDetails />} />

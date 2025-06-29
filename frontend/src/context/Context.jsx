@@ -5,17 +5,24 @@ import { toast } from "react-toastify";
 const Context = createContext();
 
 const ContextProvider = (props) => {
-  const backendUrl = import.meta.env.VITE_BACK_END_URL;
+  const backendUrl = "http://localhost:4000";
   const [token, settoken] = useState("");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Check if session has expired (3 days)
   const isSessionExpired = (loginTimestamp) => {
-    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
-    const currentTime = new Date().getTime();
-    const loginTime = new Date(loginTimestamp).getTime();
-    return (currentTime - loginTime) > threeDaysInMs;
+    if (!loginTimestamp) return true;
+    
+    try {
+      const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+      const currentTime = new Date().getTime();
+      const loginTime = new Date(loginTimestamp).getTime();
+      return (currentTime - loginTime) > threeDaysInMs;
+    } catch (error) {
+      console.error('Error parsing login timestamp:', error);
+      return true; // If we can't parse the timestamp, consider it expired
+    }
   };
 
   useEffect(() => {
@@ -23,36 +30,62 @@ const ContextProvider = (props) => {
       const storedToken = localStorage.getItem("token");
       const loginTimestamp = localStorage.getItem("loginTimestamp");
       
-      if (storedToken && loginTimestamp) {
-        // Check if session has expired
-        if (isSessionExpired(loginTimestamp)) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-          localStorage.removeItem("loginTimestamp");
-          settoken("");
-          setUser(null);
-          toast.error('Session expired. Please login again.');
-          setLoading(false);
-          return;
-        }
+      if (storedToken) {
+        // If no loginTimestamp exists, try to validate the token anyway
+        // This handles cases where users logged in before loginTimestamp was implemented
+        if (!loginTimestamp) {
+          console.log('No loginTimestamp found, validating token directly...');
+          try {
+            const response = await axios.get(`${backendUrl}/api/user/profile`, {
+              headers: {
+                Authorization: `Bearer ${storedToken}`,
+              },
+            });
+            settoken(storedToken);
+            setUser(response.data.user);
+            // Set a new loginTimestamp for future sessions
+            const loginTime = new Date().toISOString();
+            localStorage.setItem("loginTimestamp", loginTime);
+          } catch (error) {
+            console.error('Token validation failed:', error);
+            localStorage.removeItem("token");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("loginTimestamp");
+            settoken("");
+            setUser(null);
+            toast.error('Session expired. Please login again.');
+          }
+        } else {
+          // Check if session has expired
+          if (isSessionExpired(loginTimestamp)) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("loginTimestamp");
+            settoken("");
+            setUser(null);
+            toast.error('Session expired. Please login again.');
+            setLoading(false);
+            return;
+          }
 
-        try {
-          // Verify token with backend
-          const response = await axios.get('http://localhost:4000/api/user/profile', {
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-            },
-          });
-          settoken(storedToken);
-          setUser(response.data.user);
-        } catch (error) {
-          console.error('Token validation failed:', error);
-          localStorage.removeItem("token");
-          localStorage.removeItem("userId");
-          localStorage.removeItem("loginTimestamp");
-          settoken("");
-          setUser(null);
-          toast.error('Session expired. Please login again.');
+          try {
+            // Verify token with backend
+            const response = await axios.get(`${backendUrl}/api/user/profile`, {
+              headers: {
+                Authorization: `Bearer ${storedToken}`,
+              },
+            });
+            settoken(storedToken);
+            setUser(response.data.user);
+          } catch (error) {
+            console.error('Token validation failed:', error);
+            localStorage.removeItem("token");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("loginTimestamp");
+            settoken("");
+            setUser(null);
+            toast.error('Session expired. Please login again.');
+          }
         }
       }
       setLoading(false);

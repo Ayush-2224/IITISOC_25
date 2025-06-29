@@ -533,6 +533,23 @@ const GroupDetails = () => {
           )}
         </div>
 
+        {/* Events Section */}
+        <div className="mb-8">
+          <UpcomingEvents
+            events={events}
+            userId={localStorage.getItem("userId")}
+            groupCreatorId={group?.createdBy?._id}
+            onDelete={(deletedId) =>
+              setEvents((prev) => prev.filter((e) => e._id !== deletedId))
+            }
+            joinEvent={joinEvent}
+            leaveEvent={leaveEvent}
+            onEditEvent={openEditModal}
+            joiningEvents={joiningEvents}
+            leavingEvents={leavingEvents}
+          />
+        </div>
+
         {/* Recommended Movies Section */}
         <div className="mb-12">
           <h3 className="text-xl font-semibold mb-6 flex items-center space-x-2">
@@ -574,23 +591,6 @@ const GroupDetails = () => {
           ) : (
             <div className="text-gray-400 py-8 text-center">No recommendations found for this group yet.</div>
           )}
-        </div>
-
-        {/* Events Section */}
-        <div className="mb-8">
-          <UpcomingEvents
-            events={events}
-            userId={localStorage.getItem("userId")}
-            groupCreatorId={group?.createdBy?._id}
-            onDelete={(deletedId) =>
-              setEvents((prev) => prev.filter((e) => e._id !== deletedId))
-            }
-            joinEvent={joinEvent}
-            leaveEvent={leaveEvent}
-            onEditEvent={openEditModal}
-            joiningEvents={joiningEvents}
-            leavingEvents={leavingEvents}
-          />
         </div>
 
         {/* Group Stats */}

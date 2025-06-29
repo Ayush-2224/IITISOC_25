@@ -214,7 +214,7 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, email, profilePic } = req.body;
+    const { name, profilePic } = req.body;
 
     // Find user
     const user = await userModel.findById(userId);
@@ -222,22 +222,8 @@ const updateUserProfile = async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    // Check if email is being changed and if it's already taken
-    if (email && email !== user.email) {
-      const existingUser = await userModel.findOne({ email });
-      if (existingUser) {
-        return res.json({ success: false, message: "Email already in use" });
-      }
-      
-      // Validate email format
-      if (!validator.isEmail(email)) {
-        return res.json({ success: false, message: "Please enter valid email" });
-      }
-    }
-
-    // Update user fields
+    // Update user fields - removed email editing
     if (name) user.name = name;
-    if (email) user.email = email;
     if (profilePic) user.profilePic = profilePic;
 
     await user.save();

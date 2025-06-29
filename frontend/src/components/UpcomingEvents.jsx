@@ -7,9 +7,9 @@ import { FaEdit, FaTrash, FaEye, FaCalendar, FaClock, FaBell, FaHistory, FaCheck
 const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete, joinEvent, leaveEvent, onEditEvent, joiningEvents, leavingEvents }) => {
   const navigate = useNavigate();
   
-  // Sort all events by date (newest first) and take only the last 5
+  // Sort all events by date (closest first) and take only the first 5
   const sortedEvents = events
-    .sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime))
+    .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime))
     .slice(0, 5);
   
   // Separate past and upcoming events from the sorted list

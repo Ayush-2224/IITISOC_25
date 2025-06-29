@@ -3,7 +3,7 @@ import crypto from "crypto";
 import History from "../models/history.model.js";
 import axios from "axios";
 import Event from "../models/event.model.js";
-import { deleteAllParticipantsCalendarEvents } from "./calender.controller.js";
+import { deleteAllParticipantsCalendarEvents, deleteGoogleCalendarEvent } from "./calender.controller.js";
 import User from "../models/user.model.js";
 // Create Group
 export const createGroup = async (req, res) => {
@@ -149,7 +149,6 @@ export const leaveGroup = async (req, res) => {
           try {
             const participant = await User.findById(memberId).select('+googleRefreshToken');
             if (participant && participant.googleRefreshToken) {
-              const { deleteGoogleCalendarEvent } = await import('./calender.controller.js');
               await deleteGoogleCalendarEvent(participant, gId);
               
               // Remove mapping
@@ -162,6 +161,14 @@ export const leaveGroup = async (req, res) => {
             console.error(`Failed to delete Google Calendar event for user ${memberId} in event ${event._id}:`, error.message);
             // Continue with other events even if one fails
           }
+        }
+        
+        // Remove member from event participants list
+        if (event.participants.includes(memberId)) {
+          await Event.updateOne(
+            { _id: event._id },
+            { $pull: { participants: memberId } }
+          );
         }
       }
       
@@ -190,7 +197,6 @@ export const leaveGroup = async (req, res) => {
         try {
           const participant = await User.findById(userId).select('+googleRefreshToken');
           if (participant && participant.googleRefreshToken) {
-            const { deleteGoogleCalendarEvent } = await import('./calender.controller.js');
             await deleteGoogleCalendarEvent(participant, gId);
             
             // Remove mapping
@@ -203,6 +209,14 @@ export const leaveGroup = async (req, res) => {
           console.error(`Failed to delete Google Calendar event for user ${userId} in event ${event._id}:`, error.message);
           // Continue with other events even if one fails
         }
+      }
+      
+      // Remove user from event participants list
+      if (event.participants.includes(userId)) {
+        await Event.updateOne(
+          { _id: event._id },
+          { $pull: { participants: userId } }
+        );
       }
     }
 
