@@ -167,15 +167,22 @@ const RecommendedMovies = () => {
                       {movie.title}
                     </h3>
                     
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-1">
                         <FaStar className="w-3 h-3 text-yellow-400" />
                         <span className="text-yellow-300 text-xs">
-                          {(Math.random() * 2 + 7).toFixed(1)}
+                          {movie.rating ? movie.rating.toFixed(1) : (Math.random() * 2 + 7).toFixed(1)}
                         </span>
                       </div>
-                      <span className="text-gray-400 text-xs">ID: {movie.id}</span>
+                      <span className="text-gray-400 text-xs">{movie.year || 'Unknown'}</span>
                     </div>
+                    
+                    {/* Overview */}
+                    {movie.overview && (
+                      <p className="text-gray-400 text-xs mb-3 line-clamp-2">
+                        {movie.overview}
+                      </p>
+                    )}
                     
                     {/* Match Score */}
                     <div className="mt-3">

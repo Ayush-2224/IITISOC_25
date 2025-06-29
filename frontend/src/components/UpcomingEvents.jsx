@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaEdit, FaTrash, FaEye, FaCalendar, FaClock, FaBell, FaHistory, FaCheckCircle } from "react-icons/fa";
 
-const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete, joinEvent, leaveEvent, onEditEvent }) => {
+const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete, joinEvent, leaveEvent, onEditEvent, joiningEvents, leavingEvents }) => {
   const navigate = useNavigate();
   
   // Sort all events by date (newest first) and take only the last 5
@@ -201,13 +201,26 @@ const UpcomingEvents = ({ events, userId, groupCreatorId, onDelete, joinEvent, l
           {!event.isAdmin && !isEventPast && (
             <button
               onClick={() => handleJoinLeave(event)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 ${
+              disabled={joiningEvents.has(event._id) || leavingEvents.has(event._id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 ${
                 event.isParticipant
                   ? 'bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 hover:border-red-500/50 text-red-400 hover:text-red-300'
                   : 'bg-green-500/20 hover:bg-green-500/40 border border-green-500/30 hover:border-green-500/50 text-green-400 hover:text-green-300'
               }`}
             >
-              {event.isParticipant ? 'Leave Event' : 'Join Event'}
+              {joiningEvents.has(event._id) ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  <span>Joining...</span>
+                </div>
+              ) : leavingEvents.has(event._id) ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  <span>Leaving...</span>
+                </div>
+              ) : (
+                event.isParticipant ? 'Leave Event' : 'Join Event'
+              )}
             </button>
           )}
 

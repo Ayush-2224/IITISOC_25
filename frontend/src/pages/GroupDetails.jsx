@@ -30,6 +30,10 @@ const GroupDetails = () => {
   });
 
   const [showAllMembers, setShowAllMembers] = useState(false);
+  
+  // Loading states for join/leave events
+  const [joiningEvents, setJoiningEvents] = useState(new Set());
+  const [leavingEvents, setLeavingEvents] = useState(new Set());
 
   useEffect(() => {
     const fetchGroup = async () => {
@@ -96,6 +100,8 @@ const GroupDetails = () => {
 
   const joinEvent = async (eventId) => {
     try {
+      setJoiningEvents(prev => new Set(prev).add(eventId));
+      
       const response = await axios.post(
         `http://localhost:4000/api/events/join/${eventId}`,
         {},
@@ -114,11 +120,19 @@ const GroupDetails = () => {
     } catch (err) {
       console.error("Error joining event:", err);
       toast.error("Failed to join event");
+    } finally {
+      setJoiningEvents(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(eventId);
+        return newSet;
+      });
     }
   };
 
   const leaveEvent = async (eventId) => {
     try {
+      setLeavingEvents(prev => new Set(prev).add(eventId));
+      
       const response = await axios.post(
         `http://localhost:4000/api/events/leave/${eventId}`,
         {},
@@ -137,6 +151,12 @@ const GroupDetails = () => {
     } catch (err) {
       console.error("Error leaving event:", err);
       toast.error("Failed to leave event");
+    } finally {
+      setLeavingEvents(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(eventId);
+        return newSet;
+      });
     }
   };
 
@@ -400,41 +420,42 @@ const GroupDetails = () => {
           </h3>
           {group.members?.length > 0 ? (
             <>
-              <div className={
-                showAllMembers
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                  : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
-              }>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(showAllMembers ? group.members : group.members.slice(0, 5)).map((member) => (
                   <div
                     key={member._id}
                     className="group bg-white/5 hover:bg-white/10 p-4 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105"
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-start space-x-3">
                       <img
-  src={
-    member.profilePic ||" https://api.dicebear.com/9.x/notionists/svg?seed=Alpha"
-  }
-  alt="User"
-  className="w-12 h-12 rounded-full border-2 border-purple-500/30 group-hover:border-purple-500/50 transition-all duration-300"
-  onError={(e) => {
-    e.target.src = "https://api.dicebear.com/9.x/notionists/svg?seed=Alpha";
-  }}
-/>
+                        src={
+                          member.profilePic || "https://api.dicebear.com/9.x/notionists/svg?seed=Alpha"
+                        }
+                        alt="User"
+                        className="w-12 h-12 rounded-full border-2 border-purple-500/30 group-hover:border-purple-500/50 transition-all duration-300 flex-shrink-0"
+                        onError={(e) => {
+                          e.target.src = "https://api.dicebear.com/9.x/notionists/svg?seed=Alpha";
+                        }}
+                      />
 
-                      <div className="flex-1">
-                        <p className="text-white font-medium flex items-center space-x-2">
-                          <span>{member.name || member.email || "Anonymous"}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <p className="text-white font-medium truncate">
+                            {member.name || member.email || "Anonymous"}
+                          </p>
                           {member._id === group?.createdBy?._id && (
-                            <FaCrown className="w-3 h-3 text-yellow-400" title="Group Creator" />
+                            <FaCrown className="w-3 h-3 text-yellow-400 flex-shrink-0" title="Group Creator" />
                           )}
+                        </div>
+                        <p className="text-gray-400 text-sm truncate" title={member.email}>
+                          {member.email}
                         </p>
-                        <p className="text-gray-400 text-sm">{member.email}</p>
                       </div>
+                      
                       {/* Remove button: only show if current user is creator and member is not themselves */}
                       {group?.createdBy?._id === userId && member._id !== userId && (
                         <button
-                          className="ml-2 p-2 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 hover:border-red-500/50 rounded-full text-red-400 hover:text-red-300 transition-all duration-300 hover:scale-110"
+                          className="p-2 bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 hover:border-red-500/50 rounded-full text-red-400 hover:text-red-300 transition-all duration-300 hover:scale-110 flex-shrink-0"
                           title="Remove Member"
                           onClick={async () => {
                             if (!window.confirm(`Remove ${member.name || member.email}?`)) return;
@@ -537,6 +558,15 @@ const GroupDetails = () => {
                   />
                   <div className="p-3">
                     <h4 className="text-sm font-semibold text-white truncate" title={movie.title}>{movie.title}</h4>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-gray-400 text-xs">{movie.year || 'Unknown'}</span>
+                      {movie.rating && (
+                        <div className="flex items-center space-x-1">
+                          <span className="text-yellow-400 text-xs">⭐</span>
+                          <span className="text-yellow-300 text-xs">{movie.rating.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -558,6 +588,8 @@ const GroupDetails = () => {
             joinEvent={joinEvent}
             leaveEvent={leaveEvent}
             onEditEvent={openEditModal}
+            joiningEvents={joiningEvents}
+            leavingEvents={leavingEvents}
           />
         </div>
 
@@ -567,7 +599,7 @@ const GroupDetails = () => {
             <span className="text-blue-400">📊</span>
             <span>Group Statistics</span>
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-400 mb-2">
                 {group.members?.length || 0}
@@ -585,12 +617,6 @@ const GroupDetails = () => {
                 {events.filter(e => new Date(e.dateTime) > new Date()).length}
               </div>
               <p className="text-gray-400 text-sm">Upcoming</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-400 mb-2">
-                {Math.round(Math.random() * 30) + 85}%
-              </div>
-              <p className="text-gray-400 text-sm">Activity</p>
             </div>
           </div>
         </div>

@@ -11,6 +11,7 @@ import pollRouter from "./routes/poll.route.js";
 import { server, io, app } from "./config/socket.js";
 import Grouprouter from "./routes/group.route.js";
 import Watchlistrouter from "./routes/watchlist.route.js";
+import calendarRouter from "./routes/calender.route.js";
 
 // port from .env
 const PORT = 4000;
@@ -60,6 +61,7 @@ app.use("/api/message", messageRouter);
 app.use("/api/poll", pollRouter);
 app.use("/api/group", Grouprouter);
 app.use("/api/watchlist", Watchlistrouter);
+app.use("/api/calendar", calendarRouter);
 
 
 

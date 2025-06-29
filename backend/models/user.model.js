@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "https://api.dicebear.com/9.x/micah/svg?seed=Christopher",
   },
+  googleRefreshToken: { type: String, select: false },
+
 });
 
 const userModel = mongoose.models.user2 || mongoose.model("user2", userSchema);

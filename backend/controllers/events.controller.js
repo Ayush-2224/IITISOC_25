@@ -5,12 +5,21 @@ import Movie from "../models/movie.model.js";
 import User from "../models/user.model.js";
 import History from "../models/history.model.js";
 import { now } from "mongoose";
+import { getCalendarClient } from "../config/googleCalender.js";
+import { 
+    createGoogleCalendarEvent, 
+    updateGoogleCalendarEvent, 
+    deleteGoogleCalendarEvent,
+    updateAllParticipantsCalendarEvents,
+    deleteAllParticipantsCalendarEvents
+} from "./calender.controller.js";
+import axios from "axios";
+
+
 const createEvent = async (req, res, next) => {
-    const { title, dateTime, notes, Group, reminderTime } = req.body;
+    const { title, dateTime, notes, Group, reminder } = req.body;
     const userId = req.user.id;
     try {
-        console.log("groupid:", Group);
-
         const event = await Event.create({
             title,
             createdBy: userId,
@@ -18,11 +27,26 @@ const createEvent = async (req, res, next) => {
             notes,
             Group,
             reminder: {
-                sendReminder: reminderTime ? true : false,
-                reminderTime: reminderTime ? new Date(reminderTime) : null,
+                sendReminder: reminder?.sendReminder || false,
+                reminderTime: reminder?.sendReminder && reminder?.reminderTime 
+                    ? new Date(reminder.reminderTime) 
+                    : null,
             },
         })
-        console.log("event:", event._id);
+        
+        if (event.reminder.sendReminder && req.user.googleRefreshToken) {
+            try {
+                const gRes = await createGoogleCalendarEvent(req.user, event, event._id.toString());
+                
+                await Event.updateOne(
+                    { _id: event._id },
+                    { $set: { [`googleEventIds.${req.user._id}`]: gRes.data.id } }
+                );
+            } catch (gErr) {
+                console.error('Google Calendar insert for creator failed:', gErr.message);
+                // Don't block event creation; you can surface a warning if you wish.
+            }
+        }
 
         res.status(201).json({
             message: "Event created successfully",
@@ -169,6 +193,9 @@ const updateEvent = async (req, res, next) => {
             return next(new HttpError("You cannot update an event that has already passed", 400));
         }
         
+        // Store old reminder settings for comparison
+        const oldReminder = { ...event.reminder };
+        
         if (title) {
             event.title = title;
         }
@@ -189,6 +216,9 @@ const updateEvent = async (req, res, next) => {
             };
         }
         
+        // Handle Google Calendar updates for all participants
+        await updateAllParticipantsCalendarEvents(event, oldReminder);
+        
         await event.save();
         res.status(200).json({
             message: "Event updated successfully",
@@ -203,7 +233,6 @@ const updateEvent = async (req, res, next) => {
 
 
 const deleteEvent = async (req, res) => {
-    // console.log(req.body)
     const eventId = req.body.eventId;
     const userId = req.user.id;
     console.log(eventId)
@@ -216,6 +245,9 @@ const deleteEvent = async (req, res) => {
         if (!group || group.createdBy.toString() !== userId) {
             return res.status(403).json({ message: "Not authorized to delete" });
         }
+
+        // Remove all Google Calendar events for all participants
+        await deleteAllParticipantsCalendarEvents(event);
 
         await Event.findByIdAndDelete(eventId);
         res.status(200).json({ message: "Event deleted successfully" });
@@ -253,7 +285,25 @@ const joinEvent = async (req, res, next) => {
         if (event.participants.includes(userId)) {
             return next(new HttpError("You are already a participant of this event", 400));
         }
+        
         event.participants.push(userId);
+        
+        // Google Calendar integration for joining event
+        if (req.user.googleRefreshToken && event.reminder.sendReminder) {
+            try {
+                const gRes = await createGoogleCalendarEvent(req.user, event, `${event._id}_${req.user._id}`);
+                
+                // Store the Google Calendar event ID
+                await Event.updateOne(
+                    { _id: event._id },
+                    { $set: { [`googleEventIds.${req.user._id}`]: gRes.data.id } }
+                );
+            } catch (error) {
+                console.error("Error creating Google Calendar event:", error.message);
+                // Don't block the join operation if Google Calendar fails
+            }
+        }
+        
         await event.save();
         res.status(200).json({
             message: "You have joined the event successfully",
@@ -283,6 +333,26 @@ const leaveEvent = async (req, res, next) => {
         }
 
         event.participants = event.participants.filter(participant => participant.toString() !== userId.toString());
+        
+        // Google Calendar integration for leaving event
+        if (req.user.googleRefreshToken) {
+            const gId = event.googleEventIds?.get(req.user._id.toString());
+            if (gId) {
+                try {
+                    await deleteGoogleCalendarEvent(req.user, gId);
+                    
+                    // Remove mapping
+                    await Event.updateOne(
+                        { _id: event._id },
+                        { $unset: { [`googleEventIds.${req.user._id}`]: 1 } }
+                    );
+                } catch (gErr) {
+                    console.error('Google Calendar delete failed:', gErr.message);
+                    // Continue with the leave operation even if Google Calendar fails
+                }
+            }
+        }
+          
         await event.save();
         res.status(200).json({
             message: "You have left the event successfully",
@@ -322,6 +392,14 @@ const addMovieTOEvent = async (req, res, next) => {
           watchedMovie: movieId,
           watchedOn: new Date()
         });
+        
+        // Clear recommendation cache to ensure fresh recommendations
+        try {
+          await axios.post("http://localhost:5000/clear-cache");
+        } catch (cacheError) {
+          console.error("Failed to clear recommendation cache:", cacheError.message);
+          // Don't fail the operation if cache clearing fails
+        }
       }
   
       await event.save();

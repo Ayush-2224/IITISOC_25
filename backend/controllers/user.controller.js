@@ -88,8 +88,13 @@ const registerUser = async (req, res) => {
 
 
 const googleAuth = passport.authenticate('google', {
-    scope: ['profile', 'email'],
-    prompt: 'select_account',
+  scope: [
+    'profile',
+    'email',
+    'https://www.googleapis.com/auth/calendar.events'   
+    ],
+    accessType: 'offline',        
+    prompt: 'consent select_account' 
   });
 
 const ClientURL=process.env.BASE_URL

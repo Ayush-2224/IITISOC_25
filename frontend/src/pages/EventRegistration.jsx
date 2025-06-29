@@ -40,10 +40,21 @@ const EventRegistration = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    
+    // If sendReminder is being checked and no reminderTime is set, set it to event time
+    if (name === 'sendReminder' && checked && !formData.reminderTime) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: checked,
+        reminderTime: prev.dateTime || new Date().toISOString().slice(0, 16)
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
+    
     if (error) setError(""); // Clear error when user starts typing
   };
 
@@ -196,7 +207,11 @@ const EventRegistration = () => {
               </div>
 
               {/* Reminder Toggle */}
-              <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+              <div className={`rounded-xl p-6 border transition-all duration-300 ${
+                formData.sendReminder 
+                  ? 'bg-purple-500/10 border-purple-500/30' 
+                  : 'bg-white/5 border-white/10'
+              }`}>
                 <div className="flex items-center space-x-3">
                   <input
                     type="checkbox"
@@ -210,13 +225,18 @@ const EventRegistration = () => {
                     htmlFor="sendReminder"
                     className="text-gray-300 font-medium flex items-center space-x-2"
                   >
-                    <FaBell className="w-4 h-4 text-yellow-400" />
+                    <FaBell className={`w-4 h-4 ${formData.sendReminder ? 'text-purple-400' : 'text-yellow-400'}`} />
                     <span>Send reminder notification</span>
+                    {formData.sendReminder && (
+                      <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full">
+                        Enabled
+                      </span>
+                    )}
                   </label>
                 </div>
                 
                 {formData.sendReminder && (
-                  <div className="mt-6">
+                  <div className="mt-6 space-y-3">
                     <label
                       htmlFor="reminderTime"
                       className="block text-sm font-medium text-gray-300 mb-2"
@@ -231,9 +251,12 @@ const EventRegistration = () => {
                       onChange={handleChange}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                     />
-                    <p className="text-gray-400 text-sm mt-2">
+                    <p className="text-gray-400 text-sm">
                       We'll notify all participants at this time
                     </p>
+                    <div className="text-xs text-purple-300 bg-purple-500/10 p-3 rounded-lg">
+                      💡 <strong>Tip:</strong> Set the reminder time before the actual event time to give participants advance notice.
+                    </div>
                   </div>
                 )}
               </div>

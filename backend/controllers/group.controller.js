@@ -2,6 +2,9 @@ import Group from "../models/groups.model.js";
 import crypto from "crypto";
 import History from "../models/history.model.js";
 import axios from "axios";
+import Event from "../models/event.model.js";
+import { deleteAllParticipantsCalendarEvents } from "./calender.controller.js";
+import User from "../models/user.model.js";
 // Create Group
 export const createGroup = async (req, res) => {
   try {
@@ -84,9 +87,31 @@ export const deleteGroup = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized to delete this group" });
     }
 
+    // Find all events associated with this group
+    const groupEvents = await Event.find({ Group: groupId });
+    
+    // Delete Google Calendar events for all group events
+    for (const event of groupEvents) {
+      try {
+        await deleteAllParticipantsCalendarEvents(event);
+      } catch (error) {
+        console.error(`Failed to delete Google Calendar events for event ${event._id}:`, error.message);
+        // Continue with other events even if one fails
+      }
+    }
+
+    // Delete all events associated with this group
+    await Event.deleteMany({ Group: groupId });
+
+    // Delete group history
+    await History.deleteMany({ group: groupId });
+
+    // Delete the group
     await group.deleteOne();
-    res.status(200).json({ message: "Group deleted successfully" });
+    
+    res.status(200).json({ message: "Group and all associated events deleted successfully" });
   } catch (err) {
+    console.error('Delete group error:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -115,6 +140,31 @@ export const leaveGroup = async (req, res) => {
       if (!group.members.includes(memberId)) {
         return res.status(400).json({ message: "User is not a member of this group" });
       }
+      
+      // Delete Google Calendar events for the removed member
+      const groupEvents = await Event.find({ Group: groupId });
+      for (const event of groupEvents) {
+        const gId = event.googleEventIds?.get(memberId);
+        if (gId) {
+          try {
+            const participant = await User.findById(memberId).select('+googleRefreshToken');
+            if (participant && participant.googleRefreshToken) {
+              const { deleteGoogleCalendarEvent } = await import('./calender.controller.js');
+              await deleteGoogleCalendarEvent(participant, gId);
+              
+              // Remove mapping
+              await Event.updateOne(
+                { _id: event._id },
+                { $unset: { [`googleEventIds.${memberId}`]: 1 } }
+              );
+            }
+          } catch (error) {
+            console.error(`Failed to delete Google Calendar event for user ${memberId} in event ${event._id}:`, error.message);
+            // Continue with other events even if one fails
+          }
+        }
+      }
+      
       group.members = group.members.filter(mId => mId.toString() !== memberId);
       await group.save();
       return res.status(200).json({ message: "Member removed from group", group });
@@ -130,6 +180,30 @@ export const leaveGroup = async (req, res) => {
     // Check if user is a member
     if (!group.members.includes(userId)) {
       return res.status(400).json({ message: "You are not a member of this group" });
+    }
+
+    // Delete Google Calendar events for the leaving member
+    const groupEvents = await Event.find({ Group: groupId });
+    for (const event of groupEvents) {
+      const gId = event.googleEventIds?.get(userId);
+      if (gId) {
+        try {
+          const participant = await User.findById(userId).select('+googleRefreshToken');
+          if (participant && participant.googleRefreshToken) {
+            const { deleteGoogleCalendarEvent } = await import('./calender.controller.js');
+            await deleteGoogleCalendarEvent(participant, gId);
+            
+            // Remove mapping
+            await Event.updateOne(
+              { _id: event._id },
+              { $unset: { [`googleEventIds.${userId}`]: 1 } }
+            );
+          }
+        } catch (error) {
+          console.error(`Failed to delete Google Calendar event for user ${userId} in event ${event._id}:`, error.message);
+          // Continue with other events even if one fails
+        }
+      }
     }
 
     // Remove user from members array
@@ -150,12 +224,18 @@ export const recommendMovie = async (req, res) => {
   try {
     const { groupId } = req.params;
 
-    const history = await History.findOne({ group: groupId });
-    if (!history) {
+    // Get all history documents for this group
+    const historyDocuments = await History.find({ group: groupId });
+    
+    if (!historyDocuments || historyDocuments.length === 0) {
       return res.status(404).json({ message: "No history found for this group" });
     }
 
-    const watchedIds = history.watchedMovie || []; // now an array of string movie IDs
+    // Aggregate all watched movie IDs from all history documents
+    const watchedIds = historyDocuments
+      .map(history => history.watchedMovie)
+      .filter(movieId => movieId) // Remove any null/undefined values
+      .filter((movieId, index, arr) => arr.indexOf(movieId) === index); // Remove duplicates
 
     if (watchedIds.length === 0) {
       return res.status(400).json({ message: "No movies found in group history" });
