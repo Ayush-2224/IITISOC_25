@@ -1,8 +1,9 @@
-import React, { useRef } from 'react'
+import React, { useRef, useContext } from 'react'
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { socket } from '../socket.js';
 import axios from 'axios';
+import { Context } from '../context/Context';
 import MessageBubble from '../components/MessageBubble.jsx';
 import PollCard from '../components/PollCard.jsx';
 import SendMessageBar from '../components/SendMessageBar.jsx';
@@ -15,8 +16,20 @@ function DiscussionPage() {
   const feedRef = useRef(null);
   const { groupId } = useParams();
   const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const user = {
+  const { user: contextUser, token } = useContext(Context);
+  
+  // Use context user if available, otherwise fallback to localStorage
+  const user = contextUser || {
     _id: localStorage.getItem("userId"),
+    name: "Anonymous User",
+    profilePic: "https://api.dicebear.com/9.x/micah/svg?seed=Anonymous"
+  };
+
+  // Ensure user has required fields
+  const userWithDefaults = {
+    _id: user?._id || localStorage.getItem("userId"),
+    name: user?.name || "Anonymous User",
+    profilePic: user?.profilePic || "https://api.dicebear.com/9.x/micah/svg?seed=Anonymous"
   };
 
   const scrollToBottom = () => {
@@ -26,10 +39,14 @@ function DiscussionPage() {
     }
   };
 
+  // Function to add a new message to the feed
+  const addMessageToFeed = (message) => {
+    setFeed((prev) => [message, ...prev]);
+  };
+
   useEffect(() => {
     const fetchGroupInfo = async () => {
       try {
-        const token = localStorage.getItem("token");
         const response = await axios.get(`http://localhost:4000/api/group/${groupId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -39,24 +56,44 @@ function DiscussionPage() {
       }
     };
 
-    fetchGroupInfo();
-    socket.emit("join-event", { groupId, userId: user._id });
-    
-    axios.get(`http://localhost:4000/api/message/combined/${groupId}`).then((res) => {
-      setFeed(res.data.feed);
-      setLoading(false);
-    });
+    const fetchMessages = async () => {
+      try {
+        const response = await axios.get(`http://localhost:4000/api/message/combined/${groupId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setFeed(response.data.feed || []);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        setLoading(false);
+      }
+    };
 
-    socket.on("receive-message", (msg) => {
-      const isMine = msg.senderId === user._id;
-      setFeed((prev) => [{ ...msg, type: "message", isMine }, ...prev]);
-    });
+    if (token && groupId) {
+      fetchGroupInfo();
+      fetchMessages();
+    }
 
-    socket.on("send-poll", (poll) => {
-      setFeed((prev) => [{ ...poll, type: "poll" }, ...prev]);
-    });
+    // Join socket room
+    if (groupId && userWithDefaults._id) {
+      socket.emit("join-event", { groupId, userId: userWithDefaults._id });
+    }
 
-    socket.on("poll-update", ({ pollId, percentages }) => {
+    // Socket event listeners
+    const handleReceiveMessage = (msg) => {
+      // Only add message if it's not from the current user (to prevent duplication)
+      if (msg.senderId !== userWithDefaults._id) {
+        const messageWithType = { ...msg, type: "message", isMine: false };
+        addMessageToFeed(messageWithType);
+      }
+    };
+
+    const handlePollCreated = (poll) => {
+      const pollWithType = { ...poll, type: "poll" };
+      addMessageToFeed(pollWithType);
+    };
+
+    const handlePollUpdate = ({ pollId, percentages }) => {
       setFeed((prev) =>
         prev.map((item) =>
           item._id === pollId && item.type === "poll"
@@ -64,24 +101,33 @@ function DiscussionPage() {
             : item
         )
       );
-    });
-
-    return () => {
-      socket.off("receive-message");
-      socket.off("send-poll");
-      socket.off("poll-update");
     };
-  }, [groupId]);
+
+    // Add event listeners
+    socket.on("receive-message", handleReceiveMessage);
+    socket.on("poll-created", handlePollCreated);
+    socket.on("poll-updated", handlePollUpdate);
+
+    // Cleanup function
+    return () => {
+      socket.off("receive-message", handleReceiveMessage);
+      socket.off("poll-created", handlePollCreated);
+      socket.off("poll-updated", handlePollUpdate);
+      // Leave the room when component unmounts
+      socket.emit("leave-event", { groupId, userId: userWithDefaults._id });
+    };
+  }, [groupId, userWithDefaults._id, token]);
 
   useEffect(() => {
     const handleScroll = () => {
       const el = feedRef.current;
-      if (el.scrollTop < el.scrollHeight - el.clientHeight - 300) {
+      if (el && el.scrollTop < el.scrollHeight - el.clientHeight - 300) {
         setShowScrollBtn(true);
       } else {
         setShowScrollBtn(false);
       }
     };
+    
     const container = feedRef.current;
     container?.addEventListener("scroll", handleScroll);
     return () => container?.removeEventListener("scroll", handleScroll);
@@ -151,12 +197,12 @@ function DiscussionPage() {
                   .map((item) =>
                     item.type === "message" ? (
                       <div key={item._id} className="animate-fade-in">
-                        <MessageBubble message={item} currentUser={user} />
+                        <MessageBubble message={item} currentUser={userWithDefaults} />
                       </div>
                     ) : (
                       <div key={item._id} className="flex justify-end animate-fade-in">
                         <div className="max-w-md">
-                          <PollCard poll={item} userId={user._id} />
+                          <PollCard poll={item} userId={userWithDefaults._id} />
                         </div>
                       </div>
                     )
@@ -169,7 +215,11 @@ function DiscussionPage() {
         {/* Message Input */}
         <div className="backdrop-blur-xl bg-black/20 border-t border-white/10 p-4">
           <div className="max-w-4xl mx-auto">
-            <SendMessageBar groupId={groupId} user={user} />
+            <SendMessageBar 
+              groupId={groupId} 
+              user={userWithDefaults} 
+              onMessageSent={addMessageToFeed}
+            />
           </div>
         </div>
 

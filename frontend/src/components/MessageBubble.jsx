@@ -2,7 +2,30 @@ import React from "react";
 import { FaUser, FaClock } from "react-icons/fa";
 
 const MessageBubble = ({ message, currentUser }) => {
-  const isOwn = (message.senderId?._id === currentUser._id) || (message.isMine);
+  const isOwn = (message.senderId?._id === currentUser._id) || (message.senderId === currentUser._id) || (message.isMine);
+
+  // Handle different message structures (populated vs socket)
+  const getSenderName = () => {
+    if (message.senderId?.name) {
+      return message.senderId.name; // Populated from database
+    } else if (message.sender?.name) {
+      return message.sender.name; // From socket event
+    } else if (message.senderName) {
+      return message.senderName; // Fallback
+    }
+    return "Anonymous";
+  };
+
+  const getSenderAvatar = () => {
+    if (message.senderId?.profilePic) {
+      return message.senderId.profilePic; // Populated from database
+    } else if (message.sender?.profilePic) {
+      return message.sender.profilePic; // From socket event
+    } else if (message.senderAvatar) {
+      return message.senderAvatar; // Fallback
+    }
+    return "https://api.dicebear.com/9.x/micah/svg?seed=Anonymous";
+  };
 
   return (
     <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-4`}>
@@ -14,11 +37,19 @@ const MessageBubble = ({ message, currentUser }) => {
         {/* Sender info - only show for others' messages */}
         {!isOwn && (
           <div className="flex items-center space-x-2 mb-2 pb-2 border-b border-white/20">
-            <div className="w-6 h-6 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
-              <FaUser className="w-3 h-3 text-white" />
+            <div className="w-6 h-6 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center overflow-hidden">
+              {getSenderAvatar() ? (
+                <img 
+                  src={getSenderAvatar()} 
+                  alt={getSenderName()}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <FaUser className="w-3 h-3 text-white" />
+              )}
             </div>
             <span className="text-sm font-semibold text-gray-200">
-              {message.senderId?.name || "Anonymous"}
+              {getSenderName()}
             </span>
           </div>
         )}

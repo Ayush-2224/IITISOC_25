@@ -29,6 +29,7 @@ const ContextProvider = (props) => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem("token");
       const loginTimestamp = localStorage.getItem("loginTimestamp");
+      const storedUserData = localStorage.getItem("userData");
       
       if (storedToken) {
         // If no loginTimestamp exists, try to validate the token anyway
@@ -46,11 +47,13 @@ const ContextProvider = (props) => {
             // Set a new loginTimestamp for future sessions
             const loginTime = new Date().toISOString();
             localStorage.setItem("loginTimestamp", loginTime);
+            localStorage.setItem("userData", JSON.stringify(response.data.user));
           } catch (error) {
             console.error('Token validation failed:', error);
             localStorage.removeItem("token");
             localStorage.removeItem("userId");
             localStorage.removeItem("loginTimestamp");
+            localStorage.removeItem("userData");
             settoken("");
             setUser(null);
             toast.error('Session expired. Please login again.');
@@ -61,11 +64,23 @@ const ContextProvider = (props) => {
             localStorage.removeItem("token");
             localStorage.removeItem("userId");
             localStorage.removeItem("loginTimestamp");
+            localStorage.removeItem("userData");
             settoken("");
             setUser(null);
             toast.error('Session expired. Please login again.');
             setLoading(false);
             return;
+          }
+
+          // Load user data from localStorage first for immediate availability
+          if (storedUserData) {
+            try {
+              const userData = JSON.parse(storedUserData);
+              setUser(userData);
+              console.log('Loaded user data from localStorage:', userData);
+            } catch (error) {
+              console.error('Error parsing stored user data:', error);
+            }
           }
 
           try {
@@ -77,11 +92,14 @@ const ContextProvider = (props) => {
             });
             settoken(storedToken);
             setUser(response.data.user);
+            // Update localStorage with fresh data
+            localStorage.setItem("userData", JSON.stringify(response.data.user));
           } catch (error) {
             console.error('Token validation failed:', error);
             localStorage.removeItem("token");
             localStorage.removeItem("userId");
             localStorage.removeItem("loginTimestamp");
+            localStorage.removeItem("userData");
             settoken("");
             setUser(null);
             toast.error('Session expired. Please login again.');
@@ -99,14 +117,18 @@ const ContextProvider = (props) => {
     localStorage.setItem("token", newToken);
     localStorage.setItem("userId", userData._id);
     localStorage.setItem("loginTimestamp", loginTime);
+    // Store user data in localStorage
+    localStorage.setItem("userData", JSON.stringify(userData));
     settoken(newToken);
     setUser(userData);
+    console.log('Login successful - Token and user data set:', userData);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("loginTimestamp");
+    localStorage.removeItem("userData");
     settoken("");
     setUser(null);
     toast.success('Logged out successfully');

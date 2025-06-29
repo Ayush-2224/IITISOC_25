@@ -4,8 +4,9 @@ import axios from "axios";
 import { useState } from "react";
 import {socket} from "../socket";
 import { FaPaperPlane, FaCamera, FaPoll, FaTimes, FaSpinner } from "react-icons/fa";
-function SendMessageBar({ groupId, user }) {
-const [text, setText] = useState("");
+
+function SendMessageBar({ groupId, user, onMessageSent }) {
+  const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [showPollDialog, setShowPollDialog] = useState(false);
@@ -20,43 +21,56 @@ const [text, setText] = useState("");
   };
 
   const handleSendMessage = async () => {
-  if (!text.trim() && !imageFile) return; 
-  setIsSending(true);
+    if (!text.trim() && !imageFile) return; 
+    setIsSending(true);
 
-  try {
-    let formData = new FormData();
-    formData.append("text", text);
-    if (imageFile) formData.append("profilePic", imageFile);
-    formData.append("userId", user._id);
+    try {
+      let formData = new FormData();
+      formData.append("text", text);
+      if (imageFile) formData.append("profilePic", imageFile);
+      formData.append("userId", user._id);
 
-    const res = await axios.post(`http://localhost:4000/api/message/send/${groupId}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+      const res = await axios.post(`http://localhost:4000/api/message/send/${groupId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-    socket.emit("send-message", {
-  groupId,
-  message: {
-    text,
-    sender: {
-      _id: user._id,
-      name: user.name,
-      profilePic: user.profilePic,
+      // Add the message to the feed immediately for the sender
+      if (onMessageSent && res.data.data) {
+        const messageWithType = { 
+          ...res.data.data, 
+          type: "message", 
+          isMine: true 
+        };
+        onMessageSent(messageWithType);
+      }
+
+      // Emit socket event for other users
+      socket.emit("send-message", {
+        groupId,
+        message: {
+          ...res.data.data, // Use the message from the API response
+          senderId: user._id,
+          senderName: user.name || "Anonymous User",
+          senderAvatar: user.profilePic || "https://api.dicebear.com/9.x/micah/svg?seed=Anonymous",
+          sender: {
+            _id: user._id,
+            name: user.name || "Anonymous User",
+            profilePic: user.profilePic || "https://api.dicebear.com/9.x/micah/svg?seed=Anonymous",
+          }
+        }
+      });
+
+      resetInput();
+    } catch (error) {
+      console.error("Send message failed:", error);
+      alert("Failed to send message");
     }
-  }
-});
 
-
-    resetInput();
-  } catch (error) {
-    console.error("Send message failed:", error);
-    alert("Failed to send message");
-  }
-
-  setIsSending(false);
-};
-
+    setIsSending(false);
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -72,8 +86,7 @@ const [text, setText] = useState("");
     if (fileInputRef.current) fileInputRef.current.value = null;
   };
 
-
- return (
+  return (
     <>
       {/* Image preview */}
       {imagePreview && (
@@ -203,4 +216,4 @@ const [text, setText] = useState("");
   );
 }
 
-export default SendMessageBar
+export default SendMessageBar;
