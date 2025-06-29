@@ -2,7 +2,7 @@ import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-export const Context = createContext();
+const Context = createContext();
 
 const ContextProvider = (props) => {
   const backendUrl = import.meta.env.VITE_BACK_END_URL;
@@ -10,10 +10,32 @@ const ContextProvider = (props) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Check if session has expired (3 days)
+  const isSessionExpired = (loginTimestamp) => {
+    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+    const currentTime = new Date().getTime();
+    const loginTime = new Date(loginTimestamp).getTime();
+    return (currentTime - loginTime) > threeDaysInMs;
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem("token");
-      if (storedToken) {
+      const loginTimestamp = localStorage.getItem("loginTimestamp");
+      
+      if (storedToken && loginTimestamp) {
+        // Check if session has expired
+        if (isSessionExpired(loginTimestamp)) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("loginTimestamp");
+          settoken("");
+          setUser(null);
+          toast.error('Session expired. Please login again.');
+          setLoading(false);
+          return;
+        }
+
         try {
           // Verify token with backend
           const response = await axios.get('http://localhost:4000/api/user/profile', {
@@ -27,6 +49,7 @@ const ContextProvider = (props) => {
           console.error('Token validation failed:', error);
           localStorage.removeItem("token");
           localStorage.removeItem("userId");
+          localStorage.removeItem("loginTimestamp");
           settoken("");
           setUser(null);
           toast.error('Session expired. Please login again.');
@@ -39,8 +62,10 @@ const ContextProvider = (props) => {
   }, []);
 
   const login = (newToken, userData) => {
+    const loginTime = new Date().toISOString();
     localStorage.setItem("token", newToken);
     localStorage.setItem("userId", userData._id);
+    localStorage.setItem("loginTimestamp", loginTime);
     settoken(newToken);
     setUser(userData);
   };
@@ -48,6 +73,7 @@ const ContextProvider = (props) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    localStorage.removeItem("loginTimestamp");
     settoken("");
     setUser(null);
     toast.success('Logged out successfully');
@@ -69,4 +95,5 @@ const ContextProvider = (props) => {
   );
 };
 
+export { Context };
 export default ContextProvider;
