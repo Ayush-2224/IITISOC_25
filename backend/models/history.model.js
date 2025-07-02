@@ -14,10 +14,6 @@ const historySchema = new mongoose.Schema({
     watchedMovie: {
         type:String,
         required: true,
-    },
-    watchedOn: {
-        type: Date,
-        required: true,
     }
 }, { timestamps: true });
 

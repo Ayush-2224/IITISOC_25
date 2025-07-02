@@ -390,7 +390,6 @@ const addMovieTOEvent = async (req, res, next) => {
           group: event.Group,
           event: event._id,
           watchedMovie: movieId,
-          watchedOn: new Date()
         });
         
         // Clear recommendation cache to ensure fresh recommendations

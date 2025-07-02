@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import UpcomingEvents from "../components/UpcomingEvents.jsx";
 import { FaUsers, FaCopy, FaComments, FaPlus, FaUserCheck, FaUserTimes, FaCrown, FaCalendarAlt, FaEdit, FaClock, FaBell, FaSave, FaTimes, FaCalendar, FaSignOutAlt, FaTrash } from "react-icons/fa";
+import Recommend from "../components/Recommend.jsx";
 
 const GroupDetails = () => {
   const { groupId } = useParams();
@@ -560,35 +561,7 @@ const GroupDetails = () => {
             <div className="flex justify-center items-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
             </div>
-          ) : recommendations.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-              {recommendations.map((movie) => (
-                <Link
-                  key={movie.id}
-                  to={`/movie/${movie.id}`}
-                  className="group block bg-white/5 rounded-xl overflow-hidden shadow-lg hover:shadow-purple-500/20 hover:scale-105 transition-all duration-300"
-                >
-                  <img
-                    src={movie.poster || "https://via.placeholder.com/300x450?text=No+Image"}
-                    alt={movie.title}
-                    className="w-full h-60 object-cover object-center group-hover:opacity-90 transition-all duration-300"
-                  />
-                  <div className="p-3">
-                    <h4 className="text-sm font-semibold text-white truncate" title={movie.title}>{movie.title}</h4>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-gray-400 text-xs">{movie.year || 'Unknown'}</span>
-                      {movie.rating && (
-                        <div className="flex items-center space-x-1">
-                          <span className="text-yellow-400 text-xs">⭐</span>
-                          <span className="text-yellow-300 text-xs">{movie.rating.toFixed(1)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
+          ) : recommendations.length > 0 ? (<Recommend movieIds={recommendations}/>) : (
             <div className="text-gray-400 py-8 text-center">No recommendations found for this group yet.</div>
           )}
         </div>

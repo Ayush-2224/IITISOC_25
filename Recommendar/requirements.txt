@@ -1,0 +1,9 @@
+flask
+pandas
+numpy
+joblib
+sentence-transformers
+schedule
+pymongo
+scikit-learn
+requests

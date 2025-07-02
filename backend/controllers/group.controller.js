@@ -238,27 +238,8 @@ export const recommendMovie = async (req, res) => {
   try {
     const { groupId } = req.params;
 
-    // Get all history documents for this group
-    const historyDocuments = await History.find({ group: groupId });
-    
-    if (!historyDocuments || historyDocuments.length === 0) {
-      return res.status(404).json({ message: "No history found for this group" });
-    }
-
-    // Aggregate all watched movie IDs from all history documents
-    const watchedIds = historyDocuments
-      .map(history => history.watchedMovie)
-      .filter(movieId => movieId) // Remove any null/undefined values
-      .filter((movieId, index, arr) => arr.indexOf(movieId) === index); // Remove duplicates
-
-    if (watchedIds.length === 0) {
-      return res.status(400).json({ message: "No movies found in group history" });
-    }
-
-    const response = await axios.post("http://localhost:5000/recommend", {
-      watchedIds: watchedIds, // pass full array
-    });
-
+    const response = await axios.get(`http://localhost:5000//recommend/group/${groupId}`);
+    console.log("Response from recommendation service:", response.data);
     if (response.data && Array.isArray(response.data)) {
       return res.status(200).json({ recommendedMovies: response.data });
     } else {
