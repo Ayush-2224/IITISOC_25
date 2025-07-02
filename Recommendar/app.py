@@ -8,6 +8,9 @@ from sentence_transformers import SentenceTransformer
 import os
 import requests
 from collections import Counter
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 MODEL_DIR = "models"
@@ -19,10 +22,12 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 movie_id_to_idx = {mid: i for i, mid in enumerate(movie_ids)}
 weights = {'genres': 1.0, 'keywords': 1.0, 'overview': 1.0, 'tagline': 0.5}
 
-client = MongoClient("mongodb+srv://admin:admin@cluster0.ndd7w7i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+MONGODB_URI    = os.environ.get("MONGODB_URI")
+print(MONGODB_URI)
+client = MongoClient(MONGODB_URI)
 db = client["test"]
 
-TMDB_API_KEY = "cf79ad9b3dc6fe6f2cd294b1ea756d62"
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY")
 
 def precompute_fallback():
     fallback_scores = []

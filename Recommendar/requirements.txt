@@ -7,3 +7,4 @@ schedule
 pymongo
 scikit-learn
 requests
+python-dotenv
