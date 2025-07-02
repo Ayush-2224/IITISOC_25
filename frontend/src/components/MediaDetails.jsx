@@ -14,6 +14,7 @@ const MediaDetails = () => {
     mediaType = 'movie';
   }
   const navigate = useNavigate();
+  const [streamingPlatforms, setStreamingPlatforms] = useState([]);
   const [media, setMedia] = useState(null);
   const [cast, setCast] = useState([]);
   const [videos, setVideos] = useState([]);
@@ -34,6 +35,7 @@ const MediaDetails = () => {
     fetchMediaDetails();
     fetchCast();
     fetchVideos();
+    fetchStreamingProviders();
     if (userId) fetchWatchlistStatus();
   }, [id, mediaType]);
   const fetchWatchlistStatus = async () => {
@@ -67,6 +69,18 @@ const MediaDetails = () => {
       setLoading(false);
     }
   };
+  const fetchStreamingProviders = async () => {
+  try {
+    const res = await axios.get(
+      `https://api.themoviedb.org/3/${mediaType}/${id}/watch/providers?api_key=${API_KEY}`
+    );
+    const providers = res.data.results?.IN?.flatrate || []; // You can change 'IN' to your preferred region like 'US'
+    console.log("Streaming Providers:", providers);
+    setStreamingPlatforms(providers);
+  } catch (err) {
+    console.error("Error fetching streaming providers:", err);
+  }
+};
 
   const fetchCast = async () => {
     try {
@@ -305,8 +319,8 @@ const MediaDetails = () => {
                   <div className="flex flex-wrap gap-2 mb-8">
                     {media.genres.map((genre) => (
                       <span
-                        key={genre.id}
-                        className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-gray-300 text-sm hover:bg-white/20 transition-all duration-300"
+                      key={genre.id}
+                      className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-gray-300 text-sm hover:bg-white/20 transition-all duration-300"
                       >
                         {genre.name}
                       </span>
@@ -324,6 +338,25 @@ const MediaDetails = () => {
                   </p>
                 </div>
               )}
+              {streamingPlatforms.length > 0 && (
+<div className="bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl p-6">
+<h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+  <FaPlay className="text-red-400" /> Available on
+</h4>
+<div className="flex flex-wrap gap-4">
+  {streamingPlatforms.map((provider) => (
+    <div key={provider.provider_id} className="flex items-center gap-2">
+      <img
+        src={`https://image.tmdb.org/t/p/w45${provider.logo_path}`}
+        alt={provider.provider_name}
+        className="w-8 h-8 rounded-md"
+      />
+      <span className="text-gray-300">{provider.provider_name}</span>
+    </div>
+  ))}
+</div>
+</div>
+)}
 
               {/* Additional Info */}
               <div className="grid md:grid-cols-2 gap-6">
